@@ -24,8 +24,8 @@ func Run(ctx context.Context, opts Options) error {
 		FilePath:       opts.LogFile,
 		Format:         "standard",
 		FileLevel:      opts.LogLevel,
-		ConsoleLevel:   opts.LogLevel,
-		ConsoleOutput:  opts.ConsoleLog,
+		ConsoleLevel:   "fatal",
+		ConsoleOutput:  false,
 		EnableRotation: true,
 		RotationConfig: logger.RotationConfig{
 			MaxSize:    25,
@@ -34,18 +34,23 @@ func Run(ctx context.Context, opts Options) error {
 			Compress:   true,
 		},
 	}
-	if err := logger.InitLogger(cfg); err != nil {
+	logInstance, err := logger.NewLogger(cfg)
+	if err != nil {
 		return err
 	}
 
-	logger.Infof("Starting GeoRAW with GPX=%s input=%s recursive=%t offset=%s autoOffset=%t overwrite=%t", opts.GPXPath, opts.InputPath, opts.Recursive, opts.TimeOffset, opts.AutoOffset, opts.Overwrite)
+	infof := logInstance.Infof
+	warnf := logInstance.Warningf
+	errorf := logInstance.Errorf
+
+	infof("Starting GeoRAW with GPX=%s input=%s recursive=%t offset=%s autoOffset=%t overwrite=%t", opts.GPXPath, opts.InputPath, opts.Recursive, opts.TimeOffset, opts.AutoOffset, opts.Overwrite)
 
 	track, err := gpx.LoadTrack(opts.GPXPath)
 	if err != nil {
 		return err
 	}
 	start, end := track.Bounds()
-	logger.Infof("GPX track loaded with %d points (%s .. %s)", track.PointCount(), start.Format(time.RFC3339), end.Format(time.RFC3339))
+	infof("GPX track loaded with %d points (%s .. %s)", track.PointCount(), start.Format(time.RFC3339), end.Format(time.RFC3339))
 
 	files, err := media.CollectFiles(opts.InputPath, opts.Recursive)
 	if err != nil {
@@ -79,14 +84,14 @@ func Run(ctx context.Context, opts Options) error {
 			continue
 		}
 		if !media.SupportedRaw(path) {
-			logger.Warningf("Skipping non-RAW file: %s", path)
+			warnf("Skipping non-RAW file: %s", path)
 			skipped++
 			continue
 		}
 
 		meta, err := media.ReadMetadata(path)
 		if err != nil {
-			logger.Warningf("Failed to read metadata for %s: %v", path, err)
+			warnf("Failed to read metadata for %s: %v", path, err)
 			metaError++
 			continue
 		}
@@ -105,13 +110,13 @@ func Run(ctx context.Context, opts Options) error {
 	if effectiveOffset == 0 && opts.AutoOffset {
 		offset, samples, err := detectOffset(track, jobs)
 		if err != nil {
-			logger.Warningf("Auto offset detection failed, using 0s: %v", err)
+			warnf("Auto offset detection failed, using 0s: %v", err)
 		} else {
 			effectiveOffset = offset
-			logger.Infof("Auto-detected time offset: %s using %d samples", effectiveOffset, samples)
+			infof("Auto-detected time offset: %s using %d samples", effectiveOffset, samples)
 		}
 	} else if !opts.AutoOffset {
-		logger.Infof("Auto offset disabled, using manual offset: %s", effectiveOffset)
+		infof("Auto offset disabled, using manual offset: %s", effectiveOffset)
 	}
 
 	for _, job := range jobs {
@@ -125,11 +130,11 @@ func Run(ctx context.Context, opts Options) error {
 		coord, err := track.CoordinateAt(capture)
 		if err != nil {
 			if errors.Is(err, gpx.ErrTimestampOutOfBounds) {
-				logger.Warningf("Capture time outside GPX coverage for %s (%s): %v", job.Path, capture.Format(time.RFC3339), err)
+				warnf("Capture time outside GPX coverage for %s (%s): %v", job.Path, capture.Format(time.RFC3339), err)
 				outTrack++
 				continue
 			}
-			logger.Errorf("No matching GPX point for %s (%s): %v", job.Path, capture.Format(time.RFC3339), err)
+			errorf("No matching GPX point for %s (%s): %v", job.Path, capture.Format(time.RFC3339), err)
 			failed++
 			continue
 		}
@@ -137,17 +142,17 @@ func Run(ctx context.Context, opts Options) error {
 		sidecarPath := xmp.SidecarPath(job.Path)
 		wrote, err := xmp.MergeAndWrite(sidecarPath, coord, capture, opts.Overwrite)
 		if errors.Is(err, xmp.ErrGPSAlreadyPresent) {
-			logger.Infof("Skipping already geotagged sidecar %s (use --overwrite-gps to replace)", sidecarPath)
+			infof("Skipping already geotagged sidecar %s (use --overwrite-gps to replace)", sidecarPath)
 			unchanged++
 			continue
 		}
 		if err != nil {
-			logger.Errorf("Failed to write sidecar for %s: %v", job.Path, err)
+			errorf("Failed to write sidecar for %s: %v", job.Path, err)
 			failed++
 			continue
 		}
 
-		logger.Infof("Geotagged %s (%s %s, %s) -> %s [lat=%.6f lon=%.6f alt=%v]",
+		infof("Geotagged %s (%s %s, %s) -> %s [lat=%.6f lon=%.6f alt=%v]",
 			job.Path,
 			job.Meta.CameraMake,
 			job.Meta.CameraModel,
@@ -164,7 +169,9 @@ func Run(ctx context.Context, opts Options) error {
 		}
 	}
 
-	logger.Infof("Finished. processed=%d skipped=%d unchanged=%d out_of_track=%d failed=%d meta_errors=%d", processed, skipped, unchanged, outTrack, failed, metaError)
+	summary := fmt.Sprintf("Finished. processed=%d skipped=%d unchanged=%d out_of_track=%d failed=%d meta_errors=%d", processed, skipped, unchanged, outTrack, failed, metaError)
+	fmt.Println(summary)
+	infof("%s", summary)
 	return nil
 }
 
