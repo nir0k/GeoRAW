@@ -10,8 +10,8 @@ import (
 // CollectFiles resolves the input path into a list of files to process.
 // It supports direct file paths, directories, and glob patterns.
 func CollectFiles(input string, recursive bool) ([]string, error) {
-	input = strings.TrimSpace(input)
-	if input == "" {
+	inputs := splitInputs(input)
+	if len(inputs) == 0 {
 		return nil, fmt.Errorf("input path is empty")
 	}
 
@@ -25,27 +25,46 @@ func CollectFiles(input string, recursive bool) ([]string, error) {
 		}
 	}
 
-	matches, err := expandInput(input)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, candidate := range matches {
-		info, err := os.Stat(candidate)
+	for _, in := range inputs {
+		matches, err := expandInput(in)
 		if err != nil {
-			return nil, fmt.Errorf("stat %s: %w", candidate, err)
+			return nil, err
 		}
-		if info.IsDir() {
-			err = walkDir(candidate, recursive, addFile)
+
+		for _, candidate := range matches {
+			info, err := os.Stat(candidate)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("stat %s: %w", candidate, err)
 			}
-			continue
+			if info.IsDir() {
+				err = walkDir(candidate, recursive, addFile)
+				if err != nil {
+					return nil, err
+				}
+				continue
+			}
+			addFile(candidate)
 		}
-		addFile(candidate)
 	}
 
 	return results, nil
+}
+
+func splitInputs(raw string) []string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+	parts := strings.FieldsFunc(raw, func(r rune) bool {
+		return r == ';' || r == '\n' || r == '\r'
+	})
+	var out []string
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 func expandInput(input string) ([]string, error) {

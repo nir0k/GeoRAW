@@ -1,20 +1,31 @@
 package gui
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/nir0k/GeoRAW/internal/app"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // Backend is bound to the Wails frontend.
 type Backend struct {
 	ctx context.Context
+
+	mu      sync.Mutex
+	cancel  context.CancelFunc
+	running bool
+	logBuf  *bytes.Buffer
 }
 
 // OnStartup stores the Wails context.
@@ -32,15 +43,28 @@ func (b *Backend) currentCtx() (context.Context, error) {
 	return b.ctx, nil
 }
 
+// Cancel stops the current processing (if any).
+func (b *Backend) Cancel() error {
+	b.mu.Lock()
+	cancel := b.cancel
+	b.mu.Unlock()
+
+	if cancel == nil {
+		return errors.New("nothing to cancel")
+	}
+	cancel()
+	return nil
+}
+
 // PickGPX opens a file dialog filtered to GPX files.
 func (b *Backend) PickGPX() (string, error) {
 	ctx, err := b.currentCtx()
 	if err != nil {
 		return "", err
 	}
-	return runtime.OpenFileDialog(ctx, runtime.OpenDialogOptions{
+	return wruntime.OpenFileDialog(ctx, wruntime.OpenDialogOptions{
 		Title: "Select GPX file",
-		Filters: []runtime.FileFilter{
+		Filters: []wruntime.FileFilter{
 			{DisplayName: "GPX", Pattern: "*.gpx"},
 		},
 	})
@@ -52,9 +76,100 @@ func (b *Backend) PickFolder() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{
+	return wruntime.OpenDirectoryDialog(ctx, wruntime.OpenDialogOptions{
 		Title: "Select photo folder",
 	})
+}
+
+// PickFiles opens a multi-file chooser for photos.
+func (b *Backend) PickFiles() ([]string, error) {
+	ctx, err := b.currentCtx()
+	if err != nil {
+		return nil, err
+	}
+	res, err := wruntime.OpenMultipleFilesDialog(ctx, wruntime.OpenDialogOptions{
+		Title: "Select photos",
+		Filters: []wruntime.FileFilter{
+			{DisplayName: "RAW photos", Pattern: "*.cr2;*.cr3;*.arw;*.nef;*.raf;*.dng;*.rw2;*.orf;*.pef"},
+			{DisplayName: "All files", Pattern: "*.*"},
+		},
+	})
+	return res, err
+}
+
+// ClearLogs resets the in-memory log buffer.
+func (b *Backend) ClearLogs() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.logBuf != nil {
+		b.logBuf.Reset()
+	}
+}
+
+// GetLogs returns the current in-memory log.
+func (b *Backend) GetLogs() (string, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.logBuf == nil {
+		return "", nil
+	}
+	return b.logBuf.String(), nil
+}
+
+// SaveLog asks for a path and writes the in-memory log to disk.
+func (b *Backend) SaveLog() (string, error) {
+	ctx, err := b.currentCtx()
+	if err != nil {
+		return "", err
+	}
+	logStr, err := b.GetLogs()
+	if err != nil {
+		return "", err
+	}
+	if strings.TrimSpace(logStr) == "" {
+		return "", errors.New("log is empty")
+	}
+
+	target, err := wruntime.SaveFileDialog(ctx, wruntime.SaveDialogOptions{
+		Title:           "Save log",
+		DefaultFilename: "georaw.log",
+		Filters: []wruntime.FileFilter{
+			{DisplayName: "Log", Pattern: "*.log"},
+			{DisplayName: "All files", Pattern: "*.*"},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	if target == "" {
+		return "", nil
+	}
+	if err := os.WriteFile(target, []byte(logStr), 0o644); err != nil {
+		return "", err
+	}
+	return target, nil
+}
+
+// OpenFolder opens a directory in the system file manager.
+func (b *Backend) OpenFolder(path string) error {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return errors.New("path is empty")
+	}
+	if abs, err := filepath.Abs(path); err == nil {
+		path = abs
+	}
+
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("explorer", path)
+	case "darwin":
+		cmd = exec.Command("open", path)
+	default:
+		cmd = exec.Command("xdg-open", path)
+	}
+	return cmd.Start()
 }
 
 // ProcessRequest represents user input from the GUI.
@@ -63,7 +178,6 @@ type ProcessRequest struct {
 	InputPath  string `json:"inputPath"`
 	Recursive  bool   `json:"recursive"`
 	LogLevel   string `json:"logLevel"`
-	LogFile    string `json:"logFile"`
 	TimeOffset string `json:"timeOffset"`
 	AutoOffset bool   `json:"autoOffset"`
 	Overwrite  bool   `json:"overwrite"`
@@ -76,24 +190,50 @@ func (b *Backend) Process(req ProcessRequest) (*app.Summary, error) {
 		return nil, err
 	}
 
+	b.mu.Lock()
+	if b.running {
+		b.mu.Unlock()
+		return nil, errors.New("already running")
+	}
+	runCtx, cancel := context.WithCancel(ctx)
+	b.running = true
+	b.cancel = cancel
+	b.mu.Unlock()
+
+	defer func() {
+		b.mu.Lock()
+		if b.cancel != nil {
+			b.cancel()
+		}
+		b.running = false
+		b.cancel = nil
+		b.mu.Unlock()
+	}()
+
 	offset, err := parseOffset(req.TimeOffset)
 	if err != nil {
 		return nil, err
 	}
+
+	// Attach in-memory log buffer
+	buf := &bytes.Buffer{}
+	b.mu.Lock()
+	b.logBuf = buf
+	b.mu.Unlock()
 
 	opts := app.Options{
 		GPXPath:      req.GPXPath,
 		InputPath:    req.InputPath,
 		Recursive:    req.Recursive,
 		LogLevel:     req.LogLevel,
-		LogFile:      req.LogFile,
+		LogFile:      "",
 		TimeOffset:   offset,
 		AutoOffset:   req.AutoOffset,
 		Overwrite:    req.Overwrite,
 		PrintSummary: false,
 	}
 
-	return app.Run(ctx, opts)
+	return app.RunWithLogger(runCtx, opts, buf)
 }
 
 // parseOffset accepts human-friendly strings like "1h30m", "01:30:00", "-15m", "+90s".

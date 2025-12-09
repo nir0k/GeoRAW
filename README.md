@@ -62,6 +62,43 @@ Notes:
 
 After a make build, run the produced binary from `bin/` (e.g., `./bin/georaw.linux-amd64` or `./bin/georaw-gui.exe`).
 
+## Build on Windows (PowerShell)
+Prereqs: Go, CGO toolchain (MSVC Build Tools or MinGW-w64), WebView2 Runtime.
+
+- CLI:
+  ```powershell
+  go build -o bin/georaw.exe ./cmd/georaw
+  ```
+- GUI dev (runs from disk, shows console for logs):
+  ```powershell
+  $env:assetdir="frontend"; $env:CGO_ENABLED=1; go run -tags dev ./cmd/georaw-gui
+  ```
+- GUI production build (frontend embedded, no console window):
+  ```powershell
+  $env:CGO_ENABLED=1; go build -tags production -ldflags="-H windowsgui" -o bin/georaw-gui.exe ./cmd/georaw-gui
+  ```
+
+### Windows build with custom icon
+Use an `.ico` with multiple sizes (at least 16, 32, 48, 64, 128, 256).
+
+1) Place your icon as `cmd/georaw-gui/icon.ico`.
+2) Generate the resource (once per icon change):
+   ```powershell
+   cd cmd/georaw-gui
+   rsrc -ico icon.ico -o icon.syso
+   cd ..
+   ```
+3) Build the GUI:
+   ```powershell
+   set CGO_ENABLED=1
+   go build -tags production -ldflags="-H windowsgui" -o bin/georaw-gui.exe ./cmd/georaw-gui
+   ```
+Dev (`go run -tags dev`) не показывает иконку; она видна только в собранном exe.
+
+## App icon (Windows)
+- Формат: `.ico` с несколькими размерами внутри (рекомендуется минимум 16×16, 32×32, 48×48, 64×64, 128×128, 256×256).
+- Для production exe на Windows иконка подхватывается из `cmd/georaw-gui/icon.syso`, собранного из `icon.ico` (см. шаги выше). In dev-run иконка окна не отображается — это ограничение Wails.
+
 ### Notes
 - Existing sidecars keep all other tags; only GPS-related tags are replaced (`GPSLatitude`, `GPSLongitude`, `GPSAltitude`, `GPSVersionID`, `GPSDateStamp`, `GPSTimeStamp`, and their refs).
 - Logs are written to a file (console output is disabled for GUI; CLI prints a final summary).

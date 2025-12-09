@@ -1,9 +1,11 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"path/filepath"
 	"strings"
 	"time"
@@ -34,6 +36,15 @@ type Summary struct {
 
 // Run is the main entry point for the workflow.
 func Run(ctx context.Context, opts Options) (*Summary, error) {
+	return run(ctx, opts, nil)
+}
+
+// RunWithLogger allows piping logs into an in-memory buffer instead of a file.
+func RunWithLogger(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error) {
+	return run(ctx, opts, buf)
+}
+
+func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, err
 	}
@@ -42,8 +53,8 @@ func Run(ctx context.Context, opts Options) (*Summary, error) {
 		FilePath:       opts.LogFile,
 		Format:         "standard",
 		FileLevel:      opts.LogLevel,
-		ConsoleLevel:   "fatal",
-		ConsoleOutput:  false,
+		ConsoleLevel:   opts.LogLevel,
+		ConsoleOutput:  buf != nil,
 		EnableRotation: true,
 		RotationConfig: logger.RotationConfig{
 			MaxSize:    25,
@@ -55,6 +66,10 @@ func Run(ctx context.Context, opts Options) (*Summary, error) {
 	logInstance, err := logger.NewLogger(cfg)
 	if err != nil {
 		return nil, err
+	}
+	if buf != nil {
+		logInstance.Config.ConsoleOutput = true
+		logInstance.ConsoleLogger = log.New(buf, "", 0)
 	}
 
 	infof := logInstance.Infof
