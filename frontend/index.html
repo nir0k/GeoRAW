@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoRAW</title>
+  <style>
+    :root {
+      --bg: #0f1624;
+      --panel: #151e2e;
+      --text: #e6eefc;
+      --accent: #5eead4;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(94,234,212,0.12), transparent 25%), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 32px 16px;
+    }
+    .shell {
+      width: min(1000px, 100%);
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    p.desc { margin: 0 0 20px 0; color: var(--muted); }
+    .grid { display: grid; gap: 12px; }
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      outline: none;
+      appearance: none;
+    }
+    input[type="checkbox"] { margin-right: 8px; }
+    .row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); }
+    button {
+      background: linear-gradient(135deg, #22d3ee, #5eead4);
+      color: #0f1624;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(34,211,238,0.35);
+    }
+    button.secondary {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      box-shadow: none;
+    }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .status { margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <h1>GeoRAW</h1>
+    <p class="desc">Geotag RAW photos using a GPX track and write GPS to XMP sidecars.</p>
+
+    <div class="grid">
+      <div class="row">
+        <div>
+          <label>GPX file</label>
+          <input id="gpxPath" type="text" placeholder="/path/track.gpx">
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="pickGPX()">Browse GPX</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Photos path (file / folder / glob)</label>
+          <input id="inputPath" type="text" placeholder="/photos/*.CR3">
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="pickFolder()">Browse Folder</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Log level</label>
+          <select id="logLevel">
+            <option>info</option>
+            <option>debug</option>
+            <option>trace</option>
+            <option>warning</option>
+            <option>error</option>
+            <option>fatal</option>
+          </select>
+        </div>
+        <div>
+          <label>Time offset (seconds)</label>
+          <input id="timeOffset" type="number" value="0">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Log file (optional)</label>
+          <input id="logFile" type="text" placeholder="defaults near binary">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label><input id="recursive" type="checkbox"> Scan subdirectories</label>
+        </div>
+        <div>
+          <label><input id="autoOffset" type="checkbox" checked> Auto-detect offset</label>
+        </div>
+        <div>
+          <label><input id="overwrite" type="checkbox"> Overwrite existing GPS</label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button onclick="runProcess()">Run</button>
+      </div>
+
+      <div id="status" class="status">Idle</div>
+      <div id="results" class="status" style="max-height:280px; overflow:auto; margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <script src="/wails/runtime.js"></script>
+  <script>
+    function getBackend() {
+      if (window.backend) return window.backend;
+      if (window.go && window.go.gui && window.go.gui.Backend) {
+        window.backend = window.go.gui.Backend;
+        return window.backend;
+      }
+      if (window.go && window.go.main && window.go.main.Backend) {
+        window.backend = window.go.main.Backend;
+        return window.backend;
+      }
+      throw new Error("Backend is not ready yet");
+    }
+
+    async function pickGPX() {
+      try {
+        const result = await getBackend().PickGPX();
+        if (result) document.getElementById('gpxPath').value = result;
+      } catch (e) { setStatus(e.message, true); }
+    }
+    async function pickFolder() {
+      try {
+        const result = await getBackend().PickFolder();
+        if (result) document.getElementById('inputPath').value = result;
+      } catch (e) { setStatus(e.message, true); }
+    }
+
+    async function runProcess() {
+      setStatus("Running...", false);
+      const req = {
+        gpxPath: document.getElementById('gpxPath').value,
+        inputPath: document.getElementById('inputPath').value,
+        recursive: document.getElementById('recursive').checked,
+        logLevel: document.getElementById('logLevel').value,
+        logFile: document.getElementById('logFile').value,
+        timeOffsetSeconds: parseInt(document.getElementById('timeOffset').value || "0", 10),
+        autoOffset: document.getElementById('autoOffset').checked,
+        overwrite: document.getElementById('overwrite').checked,
+      };
+      try {
+        const res = await getBackend().Process(req);
+        renderResults(res);
+      } catch (err) {
+        setStatus(err.message || String(err), true);
+      }
+    }
+
+    function setStatus(msg, isError) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.style.color = isError ? "#fca5a5" : "#e6eefc";
+    }
+
+    function renderResults(summary) {
+      if (!summary) return;
+      const status = `Finished. processed=${summary.processed} skipped=${summary.skipped} unchanged=${summary.unchanged} out_of_track=${summary.out_of_track} failed=${summary.failed} meta_errors=${summary.meta_errors}`;
+      setStatus(status, summary.failed > 0 || summary.meta_errors > 0);
+
+      let html = "";
+      (summary.files || []).forEach(item => {
+        const color = ({
+          processed: "#34d399",
+          unchanged: "#a5b4fc",
+          skipped: "#9ca3af",
+          out_of_track: "#fbbf24",
+          meta_error: "#f97316",
+          failed: "#f87171",
+        })[item.status] || "#e5e7eb";
+        html += `<div style="padding:8px;border:1px solid rgba(255,255,255,0.06);border-radius:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;flex-direction:column;gap:4px;max-width:80%;">
+            <span style="color:${color};font-weight:600">${item.status}</span>
+            <span style="color:#e5e7eb;">${item.path}</span>
+            ${item.message ? `<span style="color:#9ca3af;font-size:13px;">${item.message}</span>` : ""}
+          </div>
+        </div>`;
+      });
+      const resultsEl = document.getElementById('results');
+      resultsEl.innerHTML = html || "<div style='color:#9ca3af;'>No files processed.</div>";
+    }
+  </script>
+</body>
+</html>

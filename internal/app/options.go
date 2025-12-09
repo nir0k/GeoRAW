@@ -18,6 +18,7 @@ type Options struct {
 	TimeOffset time.Duration
 	AutoOffset bool
 	Overwrite  bool
+	PrintSummary bool
 }
 
 // Validate performs basic validation and assigns defaults where needed.

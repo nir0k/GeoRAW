@@ -33,6 +33,16 @@ georaw --gpx /path/track.gpx --input "/photos/*.CR3" --recursive \
 - `--log-level` — log level (`trace|debug|info|warning|error|fatal`).
 - `--log-file` — log file path (defaults to `georaw.log` next to the binary).
 
+## GUI (Wails)
+A simple Wails UI is available to run the same workflow. Launch:
+```bash
+go run -tags dev ./cmd/georaw-gui
+```
+The window lets you pick GPX, photo path (file/folder/glob), toggle recursion, auto-offset, overwrite GPS, time offset (seconds), and log level. Logs are written to `georaw.log`; a completion summary plus per-file results are shown in the UI.  
+Notes:
+- Linux: install WebKitGTK/GTK dev libs (e.g. Debian/Ubuntu: `libwebkit2gtk-4.0-dev libgtk-3-dev`; Fedora: `webkit2gtk3-devel gtk3-devel cairo-devel pango-devel gdk-pixbuf2-devel libsoup3-devel`).
+- Dev builds may print `Overriding existing handler for signal 10...` from WebKitGTK — это безопасное уведомление о сигнале GC.
+
 ### Examples
 - Simple run with auto offset:
   ```bash
@@ -42,6 +52,12 @@ georaw --gpx /path/track.gpx --input "/photos/*.CR3" --recursive \
   ```bash
   georaw -g track.gpx -i /photos -r --time-offset=-30s --auto-offset=false
   ```
+
+## Build via Makefile
+- CLI Linux: `make cli-linux` → `bin/georaw`
+- CLI Windows: `make cli-windows` → `bin/georaw.exe`
+- GUI Linux (dev): `make gui-linux` → `bin/georaw-gui` (uses local `frontend` folder)
+- GUI Windows (dev): `make gui-windows` → `bin/georaw-gui.exe` (requires CGO/Windows toolchain, WebView2 SDK)
 
 ### Notes
 - Existing sidecars keep all other tags; only GPS-related tags are replaced (`GPSLatitude`, `GPSLongitude`, `GPSAltitude`, `GPSVersionID`, `GPSDateStamp`, `GPSTimeStamp`, and their refs).

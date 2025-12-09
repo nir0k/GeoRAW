@@ -33,3 +33,4 @@ go.work.sum
 
 tests/*
 georaw.log
+bin/*

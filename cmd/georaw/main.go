@@ -23,8 +23,10 @@ func main() {
 
 	pflag.Parse()
 
+	opts.PrintSummary = true
+
 	ctx := context.Background()
-	if err := app.Run(ctx, opts); err != nil {
+	if _, err := app.Run(ctx, opts); err != nil {
 		fmt.Fprintf(os.Stderr, "georaw failed: %v\n", err)
 		os.Exit(1)
 	}

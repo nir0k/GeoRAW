@@ -14,10 +14,28 @@ import (
 	"github.com/nir0k/logger"
 )
 
-// Run is the main entry point for the CLI workflow.
-func Run(ctx context.Context, opts Options) error {
+// FileResult describes per-file outcome.
+type FileResult struct {
+	Path    string `json:"path"`
+	Status  string `json:"status"`  // processed, unchanged, skipped, out_of_track, meta_error, failed
+	Message string `json:"message"` // optional details
+}
+
+// Summary collects overall stats and per-file results.
+type Summary struct {
+	Processed  int          `json:"processed"`
+	Skipped    int          `json:"skipped"`
+	Unchanged  int          `json:"unchanged"`
+	OutOfTrack int          `json:"out_of_track"`
+	Failed     int          `json:"failed"`
+	MetaError  int          `json:"meta_errors"`
+	Files      []FileResult `json:"files"`
+}
+
+// Run is the main entry point for the workflow.
+func Run(ctx context.Context, opts Options) (*Summary, error) {
 	if err := opts.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	cfg := logger.LogConfig{
@@ -36,7 +54,7 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	logInstance, err := logger.NewLogger(cfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	infof := logInstance.Infof
@@ -47,17 +65,17 @@ func Run(ctx context.Context, opts Options) error {
 
 	track, err := gpx.LoadTrack(opts.GPXPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	start, end := track.Bounds()
 	infof("GPX track loaded with %d points (%s .. %s)", track.PointCount(), start.Format(time.RFC3339), end.Format(time.RFC3339))
 
 	files, err := media.CollectFiles(opts.InputPath, opts.Recursive)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(files) == 0 {
-		return fmt.Errorf("no files found to process")
+		return nil, fmt.Errorf("no files found to process")
 	}
 
 	var (
@@ -67,6 +85,7 @@ func Run(ctx context.Context, opts Options) error {
 		unchanged int
 		outTrack  int
 		metaError int
+		results   []FileResult
 	)
 
 	jobs := make([]photoJob, 0, len(files))
@@ -74,7 +93,7 @@ func Run(ctx context.Context, opts Options) error {
 	for _, path := range files {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil, ctx.Err()
 		default:
 		}
 
@@ -86,6 +105,10 @@ func Run(ctx context.Context, opts Options) error {
 		if !media.SupportedRaw(path) {
 			warnf("Skipping non-RAW file: %s", path)
 			skipped++
+			results = append(results, FileResult{
+				Path:   path,
+				Status: "skipped",
+			})
 			continue
 		}
 
@@ -93,6 +116,11 @@ func Run(ctx context.Context, opts Options) error {
 		if err != nil {
 			warnf("Failed to read metadata for %s: %v", path, err)
 			metaError++
+			results = append(results, FileResult{
+				Path:    path,
+				Status:  "meta_error",
+				Message: err.Error(),
+			})
 			continue
 		}
 
@@ -103,7 +131,7 @@ func Run(ctx context.Context, opts Options) error {
 	}
 
 	if len(jobs) == 0 {
-		return fmt.Errorf("no RAW files to process")
+		return nil, fmt.Errorf("no RAW files to process")
 	}
 
 	effectiveOffset := opts.TimeOffset
@@ -122,7 +150,7 @@ func Run(ctx context.Context, opts Options) error {
 	for _, job := range jobs {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil, ctx.Err()
 		default:
 		}
 
@@ -132,10 +160,20 @@ func Run(ctx context.Context, opts Options) error {
 			if errors.Is(err, gpx.ErrTimestampOutOfBounds) {
 				warnf("Capture time outside GPX coverage for %s (%s): %v", job.Path, capture.Format(time.RFC3339), err)
 				outTrack++
+				results = append(results, FileResult{
+					Path:    job.Path,
+					Status:  "out_of_track",
+					Message: err.Error(),
+				})
 				continue
 			}
 			errorf("No matching GPX point for %s (%s): %v", job.Path, capture.Format(time.RFC3339), err)
 			failed++
+			results = append(results, FileResult{
+				Path:    job.Path,
+				Status:  "failed",
+				Message: err.Error(),
+			})
 			continue
 		}
 
@@ -144,11 +182,21 @@ func Run(ctx context.Context, opts Options) error {
 		if errors.Is(err, xmp.ErrGPSAlreadyPresent) {
 			infof("Skipping already geotagged sidecar %s (use --overwrite-gps to replace)", sidecarPath)
 			unchanged++
+			results = append(results, FileResult{
+				Path:    job.Path,
+				Status:  "unchanged",
+				Message: "GPS already present",
+			})
 			continue
 		}
 		if err != nil {
 			errorf("Failed to write sidecar for %s: %v", job.Path, err)
 			failed++
+			results = append(results, FileResult{
+				Path:    job.Path,
+				Status:  "failed",
+				Message: err.Error(),
+			})
 			continue
 		}
 
@@ -164,15 +212,36 @@ func Run(ctx context.Context, opts Options) error {
 		)
 		if wrote {
 			processed++
+			results = append(results, FileResult{
+				Path:    job.Path,
+				Status:  "processed",
+				Message: sidecarPath,
+			})
 		} else {
 			unchanged++
+			results = append(results, FileResult{
+				Path:    job.Path,
+				Status:  "unchanged",
+				Message: "Sidecar existed",
+			})
 		}
 	}
 
+	sum := &Summary{
+		Processed:  processed,
+		Skipped:    skipped,
+		Unchanged:  unchanged,
+		OutOfTrack: outTrack,
+		Failed:     failed,
+		MetaError:  metaError,
+		Files:      results,
+	}
 	summary := fmt.Sprintf("Finished. processed=%d skipped=%d unchanged=%d out_of_track=%d failed=%d meta_errors=%d", processed, skipped, unchanged, outTrack, failed, metaError)
-	fmt.Println(summary)
+	if opts.PrintSummary {
+		fmt.Println(summary)
+	}
 	infof("%s", summary)
-	return nil
+	return sum, nil
 }
 
 func altText(val *float64) string {
