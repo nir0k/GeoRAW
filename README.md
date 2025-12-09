@@ -42,6 +42,7 @@ The window lets you pick GPX, photo path (file/folder/glob), toggle recursion, a
 Notes:
 - Linux: install WebKitGTK/GTK dev libs (e.g. Debian/Ubuntu: `libwebkit2gtk-4.0-dev libgtk-3-dev`; Fedora: `webkit2gtk3-devel gtk3-devel cairo-devel pango-devel gdk-pixbuf2-devel libsoup3-devel`).
 - Dev builds may print `Overriding existing handler for signal 10...` from WebKitGTK — это безопасное уведомление о сигнале GC.
+- For a packaged GUI binary use `make gui-linux` / `make gui-windows` (frontend embedded). If у вас уже есть старый бинарь, пересоберите его make-целями, чтобы убрать зависимость от внешней папки `frontend`.
 
 ### Examples
 - Simple run with auto offset:
@@ -56,8 +57,8 @@ Notes:
 ## Build via Makefile
 - CLI Linux: `make cli-linux` → `bin/georaw`
 - CLI Windows: `make cli-windows` → `bin/georaw.exe`
-- GUI Linux (dev): `make gui-linux` → `bin/georaw-gui` (uses local `frontend` folder)
-- GUI Windows (dev): `make gui-windows` → `bin/georaw-gui.exe` (requires CGO/Windows toolchain, WebView2 SDK)
+- GUI Linux (production embed): `make gui-linux` → `bin/georaw-gui` (frontend embedded)
+- GUI Windows (production embed): `make gui-windows` → `bin/georaw-gui.exe` (requires CGO/Windows toolchain, WebView2 SDK)
 
 ### Notes
 - Existing sidecars keep all other tags; only GPS-related tags are replaced (`GPSLatitude`, `GPSLongitude`, `GPSAltitude`, `GPSVersionID`, `GPSDateStamp`, `GPSTimeStamp`, and their refs).

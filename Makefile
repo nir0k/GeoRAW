@@ -8,7 +8,7 @@ all: cli-linux
 
 cli-linux:
 	mkdir -p $(BINDIR)
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o $(BINDIR)/$(APP_CLI) ./cmd/georaw
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o $(BINDIR)/$(APP_CLI).linux-amd64 ./cmd/georaw
 
 cli-windows:
 	mkdir -p $(BINDIR)
@@ -16,11 +16,11 @@ cli-windows:
 
 gui-linux:
 	mkdir -p $(BINDIR)
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -tags dev -o $(BINDIR)/$(APP_GUI) ./cmd/georaw-gui
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -tags production -o $(BINDIR)/$(APP_GUI).linux-amd64 ./cmd/georaw-gui
 
 gui-windows:
 	mkdir -p $(BINDIR)
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -tags dev -o $(BINDIR)/$(APP_GUI).exe ./cmd/georaw-gui
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -tags production -o $(BINDIR)/$(APP_GUI).exe ./cmd/georaw-gui
 	@echo "Note: building GUI for Windows may require Mingw/CGO toolchain and WebView2 SDK."
 
 clean:
