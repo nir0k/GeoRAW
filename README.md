@@ -38,11 +38,11 @@ A simple Wails UI is available to run the same workflow. Launch:
 ```bash
 go run -tags dev ./cmd/georaw-gui
 ```
-The window lets you pick GPX, photo path (file/folder/glob), toggle recursion, auto-offset, overwrite GPS, time offset (seconds), and log level. Logs are written to `georaw.log`; a completion summary plus per-file results are shown in the UI.  
+The window lets you pick GPX, photo path (file/folder/glob), toggle recursion, auto-offset, overwrite GPS, a human-friendly time offset (`+1h30m`, `-00:00:30`, `90s`), and log level. Logs are written to `georaw.log`; a completion summary plus per-file results are shown in the UI.  
 Notes:
 - Linux: install WebKitGTK/GTK dev libs (e.g. Debian/Ubuntu: `libwebkit2gtk-4.0-dev libgtk-3-dev`; Fedora: `webkit2gtk3-devel gtk3-devel cairo-devel pango-devel gdk-pixbuf2-devel libsoup3-devel`).
-- Dev builds may print `Overriding existing handler for signal 10...` from WebKitGTK — это безопасное уведомление о сигнале GC.
-- For a packaged GUI binary use `make gui-linux` / `make gui-windows` (frontend embedded). If у вас уже есть старый бинарь, пересоберите его make-целями, чтобы убрать зависимость от внешней папки `frontend`.
+- Dev builds may print `Overriding existing handler for signal 10...` from WebKitGTK; this is a harmless message about GC signals.
+- For packaged GUI binaries use `make gui-linux` / `make gui-windows` (frontend embedded, Windows build hides the console). Rebuild with make if you previously ran with an external `frontend` folder.
 
 ### Examples
 - Simple run with auto offset:
@@ -55,12 +55,14 @@ Notes:
   ```
 
 ## Build via Makefile
-- CLI Linux: `make cli-linux` → `bin/georaw`
+- CLI Linux: `make cli-linux` → `bin/georaw.linux-amd64`
 - CLI Windows: `make cli-windows` → `bin/georaw.exe`
-- GUI Linux (production embed): `make gui-linux` → `bin/georaw-gui` (frontend embedded)
-- GUI Windows (production embed): `make gui-windows` → `bin/georaw-gui.exe` (requires CGO/Windows toolchain, WebView2 SDK)
+- GUI Linux (production embed): `make gui-linux` → `bin/georaw-gui.linux-amd64`
+- GUI Windows (production embed, no console window): `make gui-windows` → `bin/georaw-gui.exe` (requires CGO/Windows toolchain, WebView2 SDK)
+
+After a make build, run the produced binary from `bin/` (e.g., `./bin/georaw.linux-amd64` or `./bin/georaw-gui.exe`).
 
 ### Notes
 - Existing sidecars keep all other tags; only GPS-related tags are replaced (`GPSLatitude`, `GPSLongitude`, `GPSAltitude`, `GPSVersionID`, `GPSDateStamp`, `GPSTimeStamp`, and their refs).
-- Logs are written to both file and console; successful operations are logged too.
+- Logs are written to a file (console output is disabled for GUI; CLI prints a final summary).
 - Supported RAW extensions include Canon/Sony and many others (`.cr2`, `.cr3`, `.arw`, `.nef`, `.raf`, `.dng`, etc. — see `internal/media/metadata.go`).

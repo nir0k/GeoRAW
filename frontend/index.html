@@ -40,7 +40,7 @@
     p.desc { margin: 0 0 20px 0; color: var(--muted); }
     .grid { display: grid; gap: 12px; }
     label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
-    input[type="text"], input[type="number"], select {
+    input[type="text"], select {
       width: 100%;
       padding: 10px 12px;
       border-radius: 10px;
@@ -49,6 +49,19 @@
       color: var(--text);
       outline: none;
       appearance: none;
+    }
+    select {
+      background: rgba(17,24,39,0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+    }
+    select option {
+      background: #0f1624;
+      color: #e6eefc;
+    }
+    select:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(94,234,212,0.15);
     }
     input[type="checkbox"] { margin-right: 8px; }
     .row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); }
@@ -110,8 +123,8 @@
           </select>
         </div>
         <div>
-          <label>Time offset (seconds)</label>
-          <input id="timeOffset" type="number" value="0">
+          <label>Time offset (e.g. +1h30m or -00:00:30)</label>
+          <input id="timeOffset" type="text" value="0s" placeholder="+1h30m or -00:00:30">
         </div>
       </div>
 
@@ -179,7 +192,7 @@
         recursive: document.getElementById('recursive').checked,
         logLevel: document.getElementById('logLevel').value,
         logFile: document.getElementById('logFile').value,
-        timeOffsetSeconds: parseInt(document.getElementById('timeOffset').value || "0", 10),
+        timeOffset: (document.getElementById('timeOffset').value || "0s").trim(),
         autoOffset: document.getElementById('autoOffset').checked,
         overwrite: document.getElementById('overwrite').checked,
       };

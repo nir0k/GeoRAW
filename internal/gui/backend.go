@@ -2,6 +2,10 @@ package gui
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/nir0k/GeoRAW/internal/app"
@@ -18,9 +22,23 @@ func (b *Backend) OnStartup(ctx context.Context) {
 	b.ctx = ctx
 }
 
+func (b *Backend) currentCtx() (context.Context, error) {
+	if b == nil {
+		return nil, errors.New("backend is not initialized yet")
+	}
+	if b.ctx == nil {
+		return nil, errors.New("UI is not ready yet")
+	}
+	return b.ctx, nil
+}
+
 // PickGPX opens a file dialog filtered to GPX files.
 func (b *Backend) PickGPX() (string, error) {
-	return runtime.OpenFileDialog(b.ctx, runtime.OpenDialogOptions{
+	ctx, err := b.currentCtx()
+	if err != nil {
+		return "", err
+	}
+	return runtime.OpenFileDialog(ctx, runtime.OpenDialogOptions{
 		Title: "Select GPX file",
 		Filters: []runtime.FileFilter{
 			{DisplayName: "GPX", Pattern: "*.gpx"},
@@ -30,7 +48,11 @@ func (b *Backend) PickGPX() (string, error) {
 
 // PickFolder opens a directory chooser.
 func (b *Backend) PickFolder() (string, error) {
-	return runtime.OpenDirectoryDialog(b.ctx, runtime.OpenDialogOptions{
+	ctx, err := b.currentCtx()
+	if err != nil {
+		return "", err
+	}
+	return runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{
 		Title: "Select photo folder",
 	})
 }
@@ -42,29 +64,96 @@ type ProcessRequest struct {
 	Recursive  bool   `json:"recursive"`
 	LogLevel   string `json:"logLevel"`
 	LogFile    string `json:"logFile"`
-	TimeOffset int64  `json:"timeOffsetSeconds"`
+	TimeOffset string `json:"timeOffset"`
 	AutoOffset bool   `json:"autoOffset"`
 	Overwrite  bool   `json:"overwrite"`
 }
 
 // Process executes the geotagging workflow using existing CLI logic.
 func (b *Backend) Process(req ProcessRequest) (*app.Summary, error) {
-	ctx := b.ctx
-	if ctx == nil {
-		ctx = context.Background()
+	ctx, err := b.currentCtx()
+	if err != nil {
+		return nil, err
+	}
+
+	offset, err := parseOffset(req.TimeOffset)
+	if err != nil {
+		return nil, err
 	}
 
 	opts := app.Options{
-		GPXPath:    req.GPXPath,
-		InputPath:  req.InputPath,
-		Recursive:  req.Recursive,
-		LogLevel:   req.LogLevel,
-		LogFile:    req.LogFile,
-		TimeOffset: time.Duration(req.TimeOffset) * time.Second,
-		AutoOffset: req.AutoOffset,
-		Overwrite:  req.Overwrite,
+		GPXPath:      req.GPXPath,
+		InputPath:    req.InputPath,
+		Recursive:    req.Recursive,
+		LogLevel:     req.LogLevel,
+		LogFile:      req.LogFile,
+		TimeOffset:   offset,
+		AutoOffset:   req.AutoOffset,
+		Overwrite:    req.Overwrite,
 		PrintSummary: false,
 	}
 
 	return app.Run(ctx, opts)
+}
+
+// parseOffset accepts human-friendly strings like "1h30m", "01:30:00", "-15m", "+90s".
+func parseOffset(raw string) (time.Duration, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 0, nil
+	}
+
+	// Try Go duration first.
+	if d, err := time.ParseDuration(raw); err == nil {
+		return d, nil
+	}
+
+	// Support ±HH:MM or ±HH:MM:SS.
+	sign := 1
+	if strings.HasPrefix(raw, "-") {
+		sign = -1
+		raw = strings.TrimPrefix(raw, "-")
+	} else if strings.HasPrefix(raw, "+") {
+		raw = strings.TrimPrefix(raw, "+")
+	}
+
+	parts := strings.Split(raw, ":")
+	if len(parts) == 2 || len(parts) == 3 {
+		var h, m, s int64
+		var err error
+
+		h, err = parseComponent(parts[0], 23)
+		if err != nil {
+			return 0, err
+		}
+		m, err = parseComponent(parts[1], 59)
+		if err != nil {
+			return 0, err
+		}
+		if len(parts) == 3 {
+			s, err = parseComponent(parts[2], 59)
+			if err != nil {
+				return 0, err
+			}
+		}
+		total := time.Duration(sign) * (time.Duration(h)*time.Hour + time.Duration(m)*time.Minute + time.Duration(s)*time.Second)
+		return total, nil
+	}
+
+	return 0, fmt.Errorf("invalid time offset format: %q", raw)
+}
+
+func parseComponent(v string, max int64) (int64, error) {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return 0, nil
+	}
+	val, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid time component %q", v)
+	}
+	if val < 0 || val > max {
+		return 0, fmt.Errorf("time component %q is out of range", v)
+	}
+	return val, nil
 }

@@ -20,7 +20,7 @@ gui-linux:
 
 gui-windows:
 	mkdir -p $(BINDIR)
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -tags production -o $(BINDIR)/$(APP_GUI).exe ./cmd/georaw-gui
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -tags production -ldflags="-H windowsgui" -o $(BINDIR)/$(APP_GUI).exe ./cmd/georaw-gui
 	@echo "Note: building GUI for Windows may require Mingw/CGO toolchain and WebView2 SDK."
 
 clean:
