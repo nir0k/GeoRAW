@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/nir0k/GeoRAW/internal/app"
+	"github.com/nir0k/GeoRAW/internal/series"
 	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -183,6 +184,19 @@ type ProcessRequest struct {
 	Overwrite  bool   `json:"overwrite"`
 }
 
+// SeriesRequest represents user input for series tagging from the GUI.
+type SeriesRequest struct {
+	InputPath  string `json:"inputPath"`
+	Recursive  bool   `json:"recursive"`
+	LogLevel   string `json:"logLevel"`
+	Overwrite  bool   `json:"overwrite"`
+	Mode       string `json:"mode"`
+	Prefix     string `json:"prefix"`
+	StartIndex int    `json:"startIndex"`
+	HDRTag     string `json:"hdrTag"`
+	FocusTag   string `json:"focusTag"`
+}
+
 // Process executes the geotagging workflow using existing CLI logic.
 func (b *Backend) Process(req ProcessRequest) (*app.Summary, error) {
 	ctx, err := b.currentCtx()
@@ -234,6 +248,61 @@ func (b *Backend) Process(req ProcessRequest) (*app.Summary, error) {
 	}
 
 	return app.RunWithLogger(runCtx, opts, buf)
+}
+
+// ProcessSeries executes the series tagging workflow.
+func (b *Backend) ProcessSeries(req SeriesRequest) (*app.Summary, error) {
+	ctx, err := b.currentCtx()
+	if err != nil {
+		return nil, err
+	}
+
+	b.mu.Lock()
+	if b.running {
+		b.mu.Unlock()
+		return nil, errors.New("already running")
+	}
+	runCtx, cancel := context.WithCancel(ctx)
+	b.running = true
+	b.cancel = cancel
+	b.mu.Unlock()
+
+	defer func() {
+		b.mu.Lock()
+		if b.cancel != nil {
+			b.cancel()
+		}
+		b.running = false
+		b.cancel = nil
+		b.mu.Unlock()
+	}()
+
+	// Attach in-memory log buffer
+	buf := &bytes.Buffer{}
+	b.mu.Lock()
+	b.logBuf = buf
+	b.mu.Unlock()
+
+	mode := series.Mode(strings.ToLower(strings.TrimSpace(req.Mode)))
+	if mode == "" {
+		mode = series.ModeAuto
+	}
+
+	opts := series.Options{
+		InputPath:    req.InputPath,
+		Recursive:    req.Recursive,
+		LogLevel:     req.LogLevel,
+		LogFile:      "",
+		Overwrite:    req.Overwrite,
+		Mode:         mode,
+		Prefix:       req.Prefix,
+		StartIndex:   req.StartIndex,
+		HDRTag:       req.HDRTag,
+		FocusTag:     req.FocusTag,
+		PrintSummary: false,
+	}
+
+	return series.RunWithLogger(runCtx, opts, buf)
 }
 
 // parseOffset accepts human-friendly strings like "1h30m", "01:30:00", "-15m", "+90s".

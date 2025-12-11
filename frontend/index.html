@@ -45,7 +45,7 @@
     p.desc { margin: 0 0 20px 0; color: var(--muted); }
     .grid { display: grid; gap: 12px; }
     label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
-    input[type="text"], select {
+    input[type="text"], input[type="number"], select {
       width: 100%;
       padding: 10px 12px;
       border-radius: 10px;
@@ -70,6 +70,24 @@
     }
     input[type="checkbox"] { margin-right: 8px; }
     .row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); }
+    .tabs { display: flex; gap: 8px; margin: 8px 0 16px; }
+    .tab-button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tab-button.active {
+      background: linear-gradient(135deg, #22d3ee, #5eead4);
+      color: #0f1624;
+      box-shadow: 0 10px 30px rgba(34,211,238,0.35);
+      border-color: transparent;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
     .picker { display: flex; align-items: stretch; gap: 0; position: relative; }
     .picker input { border-radius: 10px 0 0 10px; border-right: 0; }
     .picker-buttons { display: flex; position: relative; }
@@ -186,6 +204,10 @@
       border: 1px solid rgba(255,255,255,0.08);
       color: #0f1624;
     }
+    .badges { display: flex; gap: 8px; align-items: center; }
+    .badge.tag {
+      opacity: 0.9;
+    }
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -276,78 +298,177 @@
 <body>
   <div class="shell">
     <h1>GeoRAW</h1>
-    <p class="desc">Geotag RAW photos using a GPX track and write GPS to XMP sidecars.</p>
+    <p class="desc">Geotag RAW photos with GPX or tag Canon HDR/Focus series into XMP sidecars.</p>
 
-    <div class="grid">
-      <div class="row">
-        <div>
-          <label>GPX file</label>
-          <div class="picker">
-            <input id="gpxPath" type="text" placeholder="/path/track.gpx">
-            <div class="picker-buttons">
-              <button class="secondary" onclick="pickGPX()">Browse</button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="tabs">
+      <button id="tabBtnGps" class="tab-button active" onclick="switchTab('gps')">GPS tagging</button>
+      <button id="tabBtnSeries" class="tab-button" onclick="switchTab('series')">Series tagging</button>
+    </div>
 
-      <div class="row">
-        <div>
-          <label>Photos path (file / folder / glob)</label>
-          <div class="picker">
-            <input id="inputPath" type="text" placeholder="/photos/*.CR3 or C:\path\one.cr3;C:\path\two.cr3">
-            <div class="picker-buttons">
-              <button id="photoBrowseBtn" class="secondary" onclick="togglePickerMenu(event)">Browse</button>
-              <div id="pickerMenu" class="picker-menu">
-                <button onclick="pickFiles(); hidePickerMenu()">Select files…</button>
-                <button onclick="pickFolder(); hidePickerMenu()">Select folder…</button>
+    <div id="tab-gps" class="tab-panel active">
+      <div class="grid">
+        <div class="row">
+          <div>
+            <label>GPX file</label>
+            <div class="picker">
+              <input id="gpxPath" type="text" placeholder="/path/track.gpx">
+              <div class="picker-buttons">
+                <button class="secondary" onclick="pickGPX()">Browse</button>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="row">
-        <div>
-          <label>Log level</label>
-          <select id="logLevel" class="level">
-            <option value="fatal" data-color="var(--danger)" style="color: var(--danger);">fatal</option>
-            <option value="error" data-color="var(--error)" style="color: var(--error);">error</option>
-            <option value="warning" data-color="var(--warn)" style="color: var(--warn);">warning</option>
-            <option value="info" data-color="var(--info)" style="color: var(--info);" selected>info</option>
-            <option value="debug" data-color="var(--debug)" style="color: var(--debug);">debug</option>
-            <option value="trace" data-color="var(--muted)" style="color: var(--muted);">trace</option>
-          </select>
+        <div class="row">
+          <div>
+            <label>Photos path (file / folder / glob)</label>
+            <div class="picker">
+              <input id="inputPathGps" type="text" placeholder="/photos/*.CR3 or C:\path\one.cr3;C:\path\two.cr3">
+              <div class="picker-buttons">
+                <button id="photoBrowseBtn" class="secondary" onclick="togglePickerMenu(event, 'pickerMenu', 'photoBrowseBtn')">Browse</button>
+                <div id="pickerMenu" class="picker-menu">
+                  <button onclick="pickFiles('inputPathGps'); hidePickerMenu('pickerMenu')">Select files…</button>
+                  <button onclick="pickFolder('inputPathGps'); hidePickerMenu('pickerMenu')">Select folder…</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <label>Time offset (e.g. +1h30m or -00:00:30)</label>
-          <input id="timeOffset" type="text" value="0s" placeholder="+1h30m or -00:00:30">
-        </div>
-      </div>
-      <div class="row">
-        <div>
-          <label><input id="recursive" type="checkbox"> Scan subdirectories</label>
-        </div>
-        <div>
-          <label><input id="autoOffset" type="checkbox" checked> Auto-detect offset</label>
-        </div>
-        <div>
-          <label><input id="overwrite" type="checkbox"> Overwrite existing GPS</label>
-        </div>
-      </div>
 
-      <div class="actions">
-        <button id="runBtn" onclick="runProcess()">Run</button>
-        <button id="stopBtn" class="secondary" style="display:none;" onclick="stopProcess()">Stop</button>
-      </div>
+        <div class="row">
+          <div>
+            <label>Log level</label>
+            <select id="logLevelGps" class="level">
+              <option value="fatal" data-color="var(--danger)" style="color: var(--danger);">fatal</option>
+              <option value="error" data-color="var(--error)" style="color: var(--error);">error</option>
+              <option value="warning" data-color="var(--warn)" style="color: var(--warn);">warning</option>
+              <option value="info" data-color="var(--info)" style="color: var(--info);" selected>info</option>
+              <option value="debug" data-color="var(--debug)" style="color: var(--debug);">debug</option>
+              <option value="trace" data-color="var(--muted)" style="color: var(--muted);">trace</option>
+            </select>
+          </div>
+          <div>
+            <label>Time offset (e.g. +1h30m or -00:00:30)</label>
+            <input id="timeOffset" type="text" value="0s" placeholder="+1h30m or -00:00:30">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label><input id="recursiveGps" type="checkbox"> Scan subdirectories</label>
+          </div>
+          <div>
+            <label><input id="autoOffset" type="checkbox" checked> Auto-detect offset</label>
+          </div>
+          <div>
+            <label><input id="overwriteGps" type="checkbox"> Overwrite existing GPS</label>
+          </div>
+        </div>
 
-      <div id="progress" class="progress"><div class="progress-bar"></div></div>
-      <div id="status" class="status"></div>
-      <div id="results" class="status results"></div>
-      <div id="resultsActions" class="actions" style="display:none; margin-top:4px;">
-        <button class="secondary" onclick="clearResults()">Clear</button>
-        <button class="secondary" onclick="showLog()">View log</button>
-        <button class="secondary" onclick="openFolder()">Open folder</button>
+        <div class="actions">
+          <button id="runBtnGps" onclick="runProcess()">Run</button>
+          <button id="stopBtnGps" class="secondary" style="display:none;" onclick="stopProcess()">Stop</button>
+        </div>
+
+        <div id="progress-gps" class="progress"><div class="progress-bar"></div></div>
+        <div id="status-gps" class="status"></div>
+        <div id="results-gps" class="status results"></div>
+        <div id="resultsActions-gps" class="actions" style="display:none; margin-top:4px;">
+          <button class="secondary" onclick="clearResults('gps')">Clear</button>
+          <button class="secondary" onclick="showLog()">View log</button>
+          <button class="secondary" onclick="openFolder()">Open folder</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-series" class="tab-panel">
+      <div class="grid">
+        <div class="row">
+          <div>
+            <label>Photos path (file / folder / glob)</label>
+            <div class="picker">
+              <input id="inputPathSeries" type="text" placeholder="/photos/*.CR3 or C:\path\one.cr3;C:\path\two.cr3">
+              <div class="picker-buttons">
+                <button id="photoBrowseBtnSeries" class="secondary" onclick="togglePickerMenu(event, 'pickerMenuSeries', 'photoBrowseBtnSeries')">Browse</button>
+                <div id="pickerMenuSeries" class="picker-menu">
+                  <button onclick="pickFiles('inputPathSeries'); hidePickerMenu('pickerMenuSeries')">Select files…</button>
+                  <button onclick="pickFolder('inputPathSeries'); hidePickerMenu('pickerMenuSeries')">Select folder…</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Log level</label>
+            <select id="logLevelSeries" class="level">
+              <option value="fatal" data-color="var(--danger)" style="color: var(--danger);">fatal</option>
+              <option value="error" data-color="var(--error)" style="color: var(--error);">error</option>
+              <option value="warning" data-color="var(--warn)" style="color: var(--warn);">warning</option>
+              <option value="info" data-color="var(--info)" style="color: var(--info);" selected>info</option>
+              <option value="debug" data-color="var(--debug)" style="color: var(--debug);">debug</option>
+              <option value="trace" data-color="var(--muted)" style="color: var(--muted);">trace</option>
+            </select>
+          </div>
+          <div>
+            <label>Detection mode</label>
+            <select id="modeSeries">
+              <option value="auto">Auto (HDR/Focus)</option>
+              <option value="hdr">Force HDR</option>
+              <option value="focus">Force Focus</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Series prefix (random 6 chars by default)</label>
+            <div class="picker">
+              <input id="prefixSeries" type="text" placeholder="ABC123">
+              <div class="picker-buttons">
+                <button class="secondary" onclick="seedSeriesPrefix(true)">Randomize</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label>Start index</label>
+            <input id="startIndexSeries" type="number" value="1" min="1">
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>HDR tag name</label>
+            <input id="hdrTagSeries" type="text" value="hdr_mode">
+          </div>
+          <div>
+            <label>Focus bracketing tag name</label>
+            <input id="focusTagSeries" type="text" value="focus_br">
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label><input id="recursiveSeries" type="checkbox"> Scan subdirectories</label>
+          </div>
+          <div>
+            <label><input id="overwriteSeries" type="checkbox"> Overwrite existing series tags</label>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="runSeriesBtn" onclick="runSeries()">Run</button>
+          <button id="stopSeriesBtn" class="secondary" style="display:none;" onclick="stopProcess()">Stop</button>
+        </div>
+
+        <div id="progress-series" class="progress"><div class="progress-bar"></div></div>
+        <div id="status-series" class="status"></div>
+        <div id="results-series" class="status results"></div>
+        <div id="resultsActions-series" class="actions" style="display:none; margin-top:4px;">
+          <button class="secondary" onclick="clearResults('series')">Clear</button>
+          <button class="secondary" onclick="showLog()">View log</button>
+          <button class="secondary" onclick="openFolder()">Open folder</button>
+        </div>
       </div>
     </div>
   </div>
@@ -375,7 +496,6 @@
       const doc = document.documentElement;
       const body = document.body;
 
-      // content dimensions
       const contentW = Math.max(
         doc.scrollWidth,
         doc.clientWidth,
@@ -389,7 +509,6 @@
         body ? body.clientHeight : 0
       );
 
-      // account for window chrome (borders/scrollbar)
       const chromeW = Math.max(0, window.outerWidth - window.innerWidth);
       const chromeH = Math.max(0, window.outerHeight - window.innerHeight);
 
@@ -405,15 +524,32 @@
     }
 
     window.addEventListener('load', () => {
-      applyLogLevelColor();
+      applyLogLevelColor('logLevelGps');
+      applyLogLevelColor('logLevelSeries');
+      seedSeriesPrefix(true);
       document.addEventListener('click', (e) => {
-        const menu = document.getElementById('pickerMenu');
-        const btn = document.getElementById('photoBrowseBtn');
-        if (!menu || !btn) return;
-        if (menu.contains(e.target) || btn.contains(e.target)) return;
-        hidePickerMenu();
+        ['pickerMenu', 'pickerMenuSeries'].forEach(id => {
+          const menu = document.getElementById(id);
+          const btnId = id === 'pickerMenu' ? 'photoBrowseBtn' : 'photoBrowseBtnSeries';
+          const btn = document.getElementById(btnId);
+          if (!menu || !btn) return;
+          if (menu.contains(e.target) || btn.contains(e.target)) return;
+          hidePickerMenu(id);
+        });
       });
     });
+
+    function switchTab(tab) {
+      ['gps', 'series'].forEach(t => {
+        const panel = document.getElementById(`tab-${t}`);
+        if (panel) {
+          panel.classList.toggle('active', t === tab);
+          panel.style.display = t === tab ? 'block' : 'none';
+        }
+        document.getElementById(`tabBtn${t === 'gps' ? 'Gps' : 'Series'}`).classList.toggle('active', t === tab);
+      });
+      fitWindowToContent();
+    }
 
     function getBackend() {
       if (window.backend) return window.backend;
@@ -429,19 +565,32 @@
     }
 
     let isRunning = false;
+    let currentContext = null;
+    let cachedLog = "";
+    let lastFolderPath = "";
+    let toastTimer = null;
 
-    function setRunning(running) {
+    function setRunning(context, running) {
       isRunning = running;
-      const runBtn = document.getElementById('runBtn');
-      const stopBtn = document.getElementById('stopBtn');
-      const progress = document.getElementById('progress');
-      const bar = document.querySelector('.progress-bar');
-      runBtn.disabled = running;
-      stopBtn.style.display = running ? 'inline-flex' : 'none';
-      if (running) {
-        progress.style.display = 'block';
+      currentContext = running ? context : null;
+      const runGps = document.getElementById('runBtnGps');
+      const runSeries = document.getElementById('runSeriesBtn');
+      if (runGps) runGps.disabled = running;
+      if (runSeries) runSeries.disabled = running;
+
+      const stopGps = document.getElementById('stopBtnGps');
+      const stopSeries = document.getElementById('stopSeriesBtn');
+      if (stopGps) stopGps.style.display = running && context === 'gps' ? 'inline-flex' : 'none';
+      if (stopSeries) stopSeries.style.display = running && context === 'series' ? 'inline-flex' : 'none';
+
+      const progress = document.getElementById(`progress-${context}`);
+      const bar = progress ? progress.querySelector('.progress-bar') : null;
+      if (progress && bar) {
+        progress.style.display = running ? 'block' : 'none';
         bar.classList.remove('complete');
-        bar.classList.add('indeterminate');
+        if (running) {
+          bar.classList.add('indeterminate');
+        }
       }
     }
 
@@ -449,75 +598,111 @@
       try {
         const result = await getBackend().PickGPX();
         if (result) document.getElementById('gpxPath').value = result;
-      } catch (e) { setStatus(e.message, true); }
+      } catch (e) { setStatus('gps', e.message, true); }
     }
-    async function pickFolder() {
+
+    async function pickFolder(targetId) {
       try {
         const result = await getBackend().PickFolder();
-        if (result) document.getElementById('inputPath').value = result;
-      } catch (e) { setStatus(e.message, true); }
+        if (result) document.getElementById(targetId).value = result;
+      } catch (e) { setStatus(currentContext || 'gps', e.message, true); }
     }
-    async function pickFiles() {
+    async function pickFiles(targetId) {
       try {
         const result = await getBackend().PickFiles();
         if (result && result.length) {
-          document.getElementById('inputPath').value = result.join(';');
+          document.getElementById(targetId).value = result.join(';');
         }
-      } catch (e) { setStatus(e.message, true); }
+      } catch (e) { setStatus(currentContext || 'gps', e.message, true); }
     }
 
-    function togglePickerMenu(e) {
+    function togglePickerMenu(e, id) {
       e.stopPropagation();
-      const menu = document.getElementById('pickerMenu');
+      const menu = document.getElementById(id);
       if (!menu) return;
       menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
     }
-    function hidePickerMenu() {
-      const menu = document.getElementById('pickerMenu');
+    function hidePickerMenu(id) {
+      const menu = document.getElementById(id);
       if (menu) menu.style.display = 'none';
     }
 
     async function runProcess() {
-      setStatus("Running...", false);
-      setRunning(true);
-      const resultsEl = document.getElementById('results');
-      resultsEl.innerHTML = "";
-      resultsEl.style.display = 'none';
-      document.getElementById('resultsActions').style.display = 'none';
-      resetProgress(false);
+      const ctx = 'gps';
+      setStatus(ctx, "Running...", false);
+      clearResults(ctx);
+      setRunning(ctx, true);
+      resetProgress(ctx, false);
       await getBackend().ClearLogs();
       lastFolderPath = "";
       const req = {
         gpxPath: document.getElementById('gpxPath').value,
-        inputPath: document.getElementById('inputPath').value,
-        recursive: document.getElementById('recursive').checked,
-        logLevel: document.getElementById('logLevel').value,
+        inputPath: document.getElementById('inputPathGps').value,
+        recursive: document.getElementById('recursiveGps').checked,
+        logLevel: document.getElementById('logLevelGps').value,
         timeOffset: (document.getElementById('timeOffset').value || "0s").trim(),
         autoOffset: document.getElementById('autoOffset').checked,
-        overwrite: document.getElementById('overwrite').checked,
+        overwrite: document.getElementById('overwriteGps').checked,
       };
       try {
         const res = await getBackend().Process(req);
-        renderResults(res);
+        renderResults(ctx, res);
       } catch (err) {
-        setStatus(err.message || String(err), true);
+        setStatus(ctx, err.message || String(err), true);
       } finally {
-        setRunning(false);
-        markProgressComplete();
+        setRunning(ctx, false);
+        markProgressComplete(ctx);
+      }
+    }
+
+    async function runSeries() {
+      const ctx = 'series';
+      setStatus(ctx, "Running...", false);
+      clearResults(ctx);
+      setRunning(ctx, true);
+      resetProgress(ctx, false);
+      await getBackend().ClearLogs();
+      lastFolderPath = "";
+      let startIndex = parseInt(document.getElementById('startIndexSeries').value || "1", 10);
+      if (isNaN(startIndex) || startIndex < 1) {
+        startIndex = 1;
+      }
+      const req = {
+        inputPath: document.getElementById('inputPathSeries').value,
+        recursive: document.getElementById('recursiveSeries').checked,
+        logLevel: document.getElementById('logLevelSeries').value,
+        overwrite: document.getElementById('overwriteSeries').checked,
+        mode: document.getElementById('modeSeries').value,
+        prefix: document.getElementById('prefixSeries').value,
+        startIndex,
+        hdrTag: document.getElementById('hdrTagSeries').value,
+        focusTag: document.getElementById('focusTagSeries').value,
+      };
+      try {
+        const res = await getBackend().ProcessSeries(req);
+        renderResults(ctx, res);
+      } catch (err) {
+        setStatus(ctx, err.message || String(err), true);
+      } finally {
+        setRunning(ctx, false);
+        markProgressComplete(ctx);
       }
     }
 
     async function stopProcess() {
       try {
         await getBackend().Cancel();
-        setStatus("Cancelling...", false);
+        if (currentContext) {
+          setStatus(currentContext, "Cancelling...", false);
+        }
       } catch (err) {
-        setStatus(err.message || String(err), true);
+        setStatus(currentContext || 'gps', err.message || String(err), true);
       }
     }
 
-    function setStatus(msg, isError) {
-      const el = document.getElementById('status');
+    function setStatus(context, msg, isError) {
+      const el = document.getElementById(`status-${context}`);
+      if (!el) return;
       if (!msg) {
         el.style.display = 'none';
         return;
@@ -527,20 +712,27 @@
       el.style.display = 'block';
     }
 
-    function renderResults(summary) {
+    function renderResults(context, summary) {
       if (!summary) return;
       const hasErrors = (summary.failed > 0) || (summary.meta_errors > 0);
       if (hasErrors) {
         const status = `Finished with issues. failed=${summary.failed} meta_errors=${summary.meta_errors}`;
-        setStatus(status, true);
+        setStatus(context, status, true);
         showToast("Finished with issues", "warn");
       } else {
-        setStatus("", false);
+        setStatus(context, "", false);
         showToast("Finished", "info");
       }
 
       let html = "";
       (summary.files || []).forEach(item => {
+        let tagInfo = null;
+        const message = item.message || "";
+        const tagMatch = message.match(/^([a-zA-Z0-9_]+)\s+\[([^\]]+)\]$/);
+        if (tagMatch) {
+          tagInfo = { type: tagMatch[1], id: tagMatch[2] };
+        }
+
         const colors = {
           processed: { bg: "#34d399", fg: "#0f172a" },
           unchanged: { bg: "#a5b4fc", fg: "#0f172a" },
@@ -549,67 +741,87 @@
           meta_error: { bg: "#f97316", fg: "#0f172a" },
           failed: { bg: "#f87171", fg: "#0f172a" },
         };
+        const tagColors = {
+          hdr_mode: { bg: "#38bdf8", fg: "#0f172a" },
+          focus_br: { bg: "#f59e0b", fg: "#0f172a" },
+        };
         const palette = colors[item.status] || { bg: "#e5e7eb", fg: "#0f172a" };
+        const tagPalette = tagInfo ? (tagColors[tagInfo.type] || { bg: "#cbd5e1", fg: "#0f172a" }) : null;
+        const idLine = tagInfo ? `id: [${tagInfo.id}]` : (message ? message : "");
+
         html += `<div class="result-row">
           <div class="result-info">
             <span class="result-path">${item.path}</span>
-            ${item.message ? `<span class="result-msg">${item.message}</span>` : ""}
+            ${idLine ? `<span class="result-msg">${idLine}</span>` : ""}
           </div>
-          <span class="badge" style="background:${palette.bg};color:${palette.fg};">${item.status}</span>
+          <div class="badges">
+            ${tagInfo ? `<span class="badge tag" style="background:${tagPalette.bg};color:${tagPalette.fg};">${tagInfo.type}</span>` : ""}
+            <span class="badge" style="background:${palette.bg};color:${palette.fg};">${item.status}</span>
+          </div>
         </div>`;
       });
-      const resultsEl = document.getElementById('results');
-      resultsEl.innerHTML = html || "<div style='color:#9ca3af;'>No files processed.</div>";
-      resultsEl.style.display = summary.files && summary.files.length ? 'block' : 'none';
-      document.getElementById('resultsActions').style.display = summary.files && summary.files.length ? 'flex' : 'none';
+      const resultsEl = document.getElementById(`results-${context}`);
+      if (resultsEl) {
+        resultsEl.innerHTML = html || "<div style='color:#9ca3af;'>No files processed.</div>";
+        resultsEl.style.display = summary.files && summary.files.length ? 'block' : 'none';
+      }
+      const actions = document.getElementById(`resultsActions-${context}`);
+      if (actions) {
+        actions.style.display = summary.files && summary.files.length ? 'flex' : 'none';
+      }
       if (summary.files && summary.files.length) {
         const firstPath = summary.files[0].path || "";
         lastFolderPath = extractDir(firstPath);
       }
     }
 
-    function applyLogLevelColor() {
-      const select = document.getElementById('logLevel');
+    function applyLogLevelColor(id) {
+      const select = document.getElementById(id);
+      if (!select) return;
       const opt = select.options[select.selectedIndex];
-      const color = opt.getAttribute('data-color') || 'var(--text)';
+      const color = opt?.getAttribute('data-color') || 'var(--text)';
       select.style.color = color;
     }
-    document.getElementById('logLevel').addEventListener('change', applyLogLevelColor);
+    document.getElementById('logLevelGps').addEventListener('change', () => applyLogLevelColor('logLevelGps'));
+    document.getElementById('logLevelSeries').addEventListener('change', () => applyLogLevelColor('logLevelSeries'));
 
-    function markProgressComplete() {
-      const progress = document.getElementById('progress');
-      const bar = document.querySelector('.progress-bar');
+    function markProgressComplete(context) {
+      const progress = document.getElementById(`progress-${context}`);
+      const bar = progress ? progress.querySelector('.progress-bar') : null;
+      if (!progress || !bar) return;
       progress.style.display = 'block';
       bar.classList.remove('indeterminate');
       bar.classList.add('complete');
       bar.style.marginLeft = '0';
     }
 
-    function resetProgress(hide = true) {
-      const progress = document.getElementById('progress');
-      const bar = document.querySelector('.progress-bar');
+    function resetProgress(context, hide = true) {
+      const progress = document.getElementById(`progress-${context}`);
+      const bar = progress ? progress.querySelector('.progress-bar') : null;
+      if (!progress || !bar) return;
       bar.classList.remove('indeterminate', 'complete');
       bar.style.marginLeft = '0';
       if (hide) progress.style.display = 'none';
     }
 
-    function clearResults() {
-      document.getElementById('results').innerHTML = "";
-      document.getElementById('results').style.display = 'none';
-      setStatus("", false);
-      document.getElementById('resultsActions').style.display = 'none';
-      resetProgress();
+    function clearResults(context) {
+      const resultsEl = document.getElementById(`results-${context}`);
+      if (resultsEl) {
+        resultsEl.innerHTML = "";
+        resultsEl.style.display = 'none';
+      }
+      const actions = document.getElementById(`resultsActions-${context}`);
+      if (actions) actions.style.display = 'none';
+      setStatus(context, "", false);
+      resetProgress(context);
       cachedLog = "";
       hideLog();
       lastFolderPath = "";
     }
 
-    document.getElementById('gpxPath').addEventListener('input', () => resetProgress());
-    document.getElementById('inputPath').addEventListener('input', () => resetProgress());
-
-    let cachedLog = "";
-    let lastFolderPath = "";
-    let toastTimer = null;
+    document.getElementById('gpxPath').addEventListener('input', () => resetProgress('gps'));
+    document.getElementById('inputPathGps').addEventListener('input', () => resetProgress('gps'));
+    document.getElementById('inputPathSeries').addEventListener('input', () => resetProgress('series'));
 
     function extractDir(path) {
       if (!path) return "";
@@ -638,7 +850,7 @@
         document.getElementById('logContent').textContent = cachedLog || "Log is empty.";
         document.getElementById('logModal').style.display = 'flex';
       } catch (e) {
-        setStatus(e.message, true);
+        setStatus(currentContext || 'gps', e.message, true);
       }
     }
     function hideLog() {
@@ -673,6 +885,22 @@
       toast.style.display = 'block';
       if (toastTimer) clearTimeout(toastTimer);
       toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    function randomPrefix(len = 6) {
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let out = "";
+      for (let i = 0; i < len; i++) {
+        out += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+      }
+      return out;
+    }
+    function seedSeriesPrefix(force = false) {
+      const field = document.getElementById('prefixSeries');
+      if (!field) return;
+      if (force || !field.value.trim()) {
+        field.value = randomPrefix(6);
+      }
     }
   </script>
 </body>

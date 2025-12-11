@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/nir0k/GeoRAW/frontend"
 	"github.com/nir0k/GeoRAW/internal/gui"
@@ -13,6 +14,12 @@ import (
 )
 
 func main() {
+	if os.Getenv("assetdir") == "" {
+		if _, err := os.Stat("frontend/index.html"); err == nil {
+			_ = os.Setenv("assetdir", "frontend")
+		}
+	}
+
 	app := &gui.Backend{}
 
 	err := wails.Run(&options.App{
