@@ -8,6 +8,7 @@ CLI tool that writes GPS coordinates to XMP sidecars for RAW photos using a GPX 
 - Manual time shift with `--time-offset` (e.g., `-30s`, `2m`).
 - Updates existing XMP sidecars without wiping other tags—only GPS tags are replaced.
 - Filters for common RAW extensions (Canon/Sony and others); logs skipped files and errors.
+- Canon-only HDR/Focus bracketing detection with series keywords written to XMP sidecars (no RAW changes).
 
 ## Requirements
 - Go 1.25+
@@ -33,6 +34,37 @@ georaw --gpx /path/track.gpx --input "/photos/*.CR3" --recursive \
 - `--log-level` — log level (`trace|debug|info|warning|error|fatal`).
 - `--log-file` — log file path (defaults to `georaw.log` next to the binary).
 
+## Series tagging (HDR/Focus bracketing, Canon RAW)
+Detects HDR or Focus bracketing series (Canon only), groups shots by time/order, and writes two keywords to XMP sidecars: type (`hdr_mode` or `focus_br`) and unique ID (`PREFIX_00001`, etc.). RAW files are never modified; non-Canon RAWs are skipped.
+
+### CLI (series)
+```bash
+# Linux binary
+make series-linux   # -> bin/georaw-series.linux-amd64
+# Windows binary (built on Linux without CGO)
+make series-windows # -> bin/georaw-series.exe
+```
+
+Run example:
+```bash
+georaw-series -i "/photos/*.CR3" --recursive \
+  --mode=auto --prefix=ABC123 --start-index=1 \
+  --hdr-tag=hdr_mode --focus-tag=focus_br \
+  --overwrite-series=false --log-level=info
+```
+
+Key flags:
+- `--mode` auto|hdr|focus (auto = detect HDR vs Focus; focus tag detected via Canon MakerNote 0x0032 when present).
+- `--prefix` random 6 chars by default; generates IDs like `PREFIX_00001`.
+- `--start-index` starting counter for IDs.
+- `--hdr-tag` / `--focus-tag` keywords to write.
+- `--overwrite-series` replace existing series keywords when true.
+
+### GUI
+The GUI has two tabs:
+- **GPS tagging** — existing GPX workflow.
+- **Series tagging** — select photos (file/folder/glob), mode (auto/hdr/focus), prefix/start index, tag names, recursion, overwrite toggle, and run. Results show per-file status plus series type/ID tags; logs available via the modal.
+
 ## GUI (Wails)
 A simple Wails UI is available to run the same workflow. Launch:
 ```bash
@@ -57,6 +89,8 @@ Notes:
 ## Build via Makefile
 - CLI Linux: `make cli-linux` → `bin/georaw.linux-amd64`
 - CLI Windows: `make cli-windows` → `bin/georaw.exe`
+- Series CLI Linux: `make series-linux` → `bin/georaw-series.linux-amd64`
+- Series CLI Windows: `make series-windows` → `bin/georaw-series.exe`
 - GUI Linux (production embed): `make gui-linux` → `bin/georaw-gui.linux-amd64`
 - GUI Windows (production embed, no console window): `make gui-windows` → `bin/georaw-gui.exe` (requires CGO/Windows toolchain, WebView2 SDK)
 
