@@ -1,6 +1,6 @@
-APP_CLI=georaw
+APP_CLI=georaw-cli
 APP_GUI=georaw-gui
-APP_SERIES=georaw-series
+APP_SERIES=georaw-series-cli
 BINDIR=bin
 
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
