@@ -42,6 +42,17 @@
       font-weight: 700;
       letter-spacing: -0.5px;
     }
+    .subtitle { margin: 0 0 20px 0; color: var(--muted); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .title-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 13px;
+    }
     p.desc { margin: 0 0 20px 0; color: var(--muted); }
     .grid { display: grid; gap: 12px; }
     label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
@@ -297,8 +308,13 @@
 </head>
 <body>
   <div class="shell">
-    <h1>GeoRAW</h1>
-    <p class="desc">Geotag RAW photos with GPX or tag Canon HDR/Focus series into XMP sidecars.</p>
+    <div class="title-row">
+      <h1 style="margin:0;">GeoRAW</h1>
+      <span id="versionTag" class="pill" style="display:none;"></span>
+    </div>
+    <div class="subtitle">
+      <span>Geotag RAW photos with GPX or tag Canon HDR/Focus series into XMP sidecars.</span>
+    </div>
 
     <div class="tabs">
       <button id="tabBtnGps" class="tab-button active" onclick="switchTab('gps')">GPS tagging</button>
@@ -527,6 +543,7 @@
       applyLogLevelColor('logLevelGps');
       applyLogLevelColor('logLevelSeries');
       seedSeriesPrefix(true);
+      showVersionTag();
       document.addEventListener('click', (e) => {
         ['pickerMenu', 'pickerMenuSeries'].forEach(id => {
           const menu = document.getElementById(id);
@@ -900,6 +917,18 @@
       if (!field) return;
       if (force || !field.value.trim()) {
         field.value = randomPrefix(6);
+      }
+    }
+    async function showVersionTag() {
+      try {
+        const v = await getBackend().Version();
+        const el = document.getElementById('versionTag');
+        if (el && v) {
+          el.textContent = v.startsWith('v') ? v : `v${v}`;
+          el.style.display = 'inline-flex';
+        }
+      } catch (_) {
+        // ignore
       }
     }
   </script>

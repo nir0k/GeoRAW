@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"github.com/nir0k/GeoRAW/internal/series"
+	"github.com/nir0k/GeoRAW/internal/version"
 	"github.com/spf13/pflag"
 )
 
 func main() {
 	var opts series.Options
+	var showVersion bool
 
 	pflag.StringVarP(&opts.InputPath, "input", "i", "", "Path to a photo file, directory, or glob pattern")
 	pflag.BoolVarP(&opts.Recursive, "recursive", "r", false, "Scan subdirectories when the input is a folder")
@@ -22,8 +24,14 @@ func main() {
 	pflag.StringVar((*string)(&opts.Mode), "mode", "auto", "Detection mode: auto, hdr, or focus")
 	pflag.StringVar(&opts.HDRTag, "hdr-tag", "hdr_mode", "Keyword to tag HDR series")
 	pflag.StringVar(&opts.FocusTag, "focus-tag", "focus_br", "Keyword to tag focus bracketing series")
+	pflag.BoolVarP(&showVersion, "version", "v", false, "Print version and exit")
 
 	pflag.Parse()
+	if showVersion {
+		fmt.Println(version.Version)
+		return
+	}
+
 	opts.PrintSummary = true
 
 	ctx := context.Background()

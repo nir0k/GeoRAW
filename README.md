@@ -93,6 +93,8 @@ Notes:
 - Series CLI Windows: `make series-windows` → `bin/georaw-series.exe`
 - GUI Linux (production embed): `make gui-linux` → `bin/georaw-gui.linux-amd64`
 - GUI Windows (production embed, no console window): `make gui-windows` → `bin/georaw-gui.exe` (requires CGO/Windows toolchain, WebView2 SDK)
+  
+Version injection: `VERSION=v1.2.3 make gui-linux` (default is derived from `git describe --tags --always --dirty` or `dev`).
 
 After a make build, run the produced binary from `bin/` (e.g., `./bin/georaw.linux-amd64` or `./bin/georaw-gui.exe`).
 

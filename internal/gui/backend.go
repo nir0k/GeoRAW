@@ -16,6 +16,7 @@ import (
 
 	"github.com/nir0k/GeoRAW/internal/app"
 	"github.com/nir0k/GeoRAW/internal/series"
+	"github.com/nir0k/GeoRAW/internal/version"
 	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -149,6 +150,11 @@ func (b *Backend) SaveLog() (string, error) {
 		return "", err
 	}
 	return target, nil
+}
+
+// Version returns app version.
+func (b *Backend) Version() string {
+	return version.Version
 }
 
 // OpenFolder opens a directory in the system file manager.

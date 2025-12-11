@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"github.com/nir0k/GeoRAW/internal/app"
+	"github.com/nir0k/GeoRAW/internal/version"
 	"github.com/spf13/pflag"
 )
 
 func main() {
 	var opts app.Options
+	var showVersion bool
 
 	pflag.StringVarP(&opts.GPXPath, "gpx", "g", "", "Path to GPX track file")
 	pflag.StringVarP(&opts.InputPath, "input", "i", "", "Path to a photo file, directory, or glob pattern")
@@ -20,8 +22,14 @@ func main() {
 	pflag.DurationVar(&opts.TimeOffset, "time-offset", 0, "Offset added to photo capture time (e.g. -30s or 2m)")
 	pflag.BoolVar(&opts.AutoOffset, "auto-offset", true, "Automatically estimate time offset between camera clock and GPX track when time-offset is zero")
 	pflag.BoolVarP(&opts.Overwrite, "overwrite-gps", "w", false, "Overwrite existing GPS data in XMP sidecars")
+	pflag.BoolVarP(&showVersion, "version", "v", false, "Print version and exit")
 
 	pflag.Parse()
+
+	if showVersion {
+		fmt.Println(version.Version)
+		return
+	}
 
 	opts.PrintSummary = true
 
