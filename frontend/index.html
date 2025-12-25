@@ -18,6 +18,9 @@
       --debug: #cbd5e1;
     }
     * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+    }
     body {
       margin: 0;
       font-family: "Inter", system-ui, -apple-system, sans-serif;
@@ -26,16 +29,19 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-      padding: 32px 16px;
+      align-items: stretch;
+      padding: 12px;
     }
     .shell {
-      width: min(1000px, 100%);
+      width: calc(100vw - 24px);
+      min-height: calc(100vh - 24px);
       background: var(--panel);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
     }
     h1 {
       margin: 0 0 8px 0;
@@ -97,8 +103,8 @@
       box-shadow: 0 10px 30px rgba(34,211,238,0.35);
       border-color: transparent;
     }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .tab-panel { display: none; height: 100%; }
+    .tab-panel.active { display: block; height: 100%; }
     .picker { display: flex; align-items: stretch; gap: 0; position: relative; }
     .picker input { border-radius: 10px 0 0 10px; border-right: 0; }
     .picker-buttons { display: flex; position: relative; }
@@ -329,6 +335,100 @@
       white-space: pre-wrap;
     }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+    .muted { color: var(--muted); }
+    .exif-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+      align-items: stretch;
+      height: 100%;
+      min-height: 0;
+    }
+    @media (max-width: 980px) {
+      .exif-grid { grid-template-columns: 1fr; }
+    }
+    .exif-left {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+    .file-list {
+      margin-top: 8px;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      cursor: pointer;
+      user-select: none;
+    }
+    .file-row:last-child { border-bottom: none; }
+    .file-row:hover { background: rgba(94,234,212,0.08); }
+    .file-row.active {
+      background: rgba(94,234,212,0.12);
+      border-left: 3px solid var(--accent);
+      padding-left: 7px;
+    }
+    .file-icon { width: 20px; text-align: center; opacity: 0.85; }
+    .file-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-row.dir .file-icon { color: var(--accent); }
+    .exif-right { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+    .exif-header { display:flex; align-items:center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .exif-path { font-weight: 700; word-break: break-all; }
+    .exif-details-card {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      padding: 14px;
+      min-height: 320px;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+    .exif-group { margin-bottom: 12px; }
+    .exif-group:last-child { margin-bottom: 0; }
+    .exif-group summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-size: 12px;
+      padding: 6px 0;
+    }
+    .exif-group summary::-webkit-details-marker { display: none; }
+    .exif-group summary::after {
+      content: "▸";
+      margin-left: auto;
+      color: #9ca3af;
+      transition: transform 0.2s ease;
+    }
+    .exif-group[open] summary::after { transform: rotate(90deg); }
+    .exif-row { display: grid; grid-template-columns: 170px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    @media (max-width: 640px) { .exif-row { grid-template-columns: 1fr; } }
+    .exif-row:last-child { border-bottom: none; }
+    .exif-label { color: var(--muted); font-size: 13px; display:flex; align-items:center; gap:6px; }
+    .exif-value { color: var(--text); word-break: break-word; }
+    .exif-hint { font-size: 13px; color: var(--muted); margin: 6px 0; }
+    .pill.small { padding: 4px 8px; font-size: 12px; }
+    .pill.small.xmp-badge { background: var(--accent); color: #0f1624; border-color: transparent; }
   </style>
 </head>
 <body>
@@ -344,6 +444,7 @@
     <div class="tabs">
       <button id="tabBtnGps" class="tab-button active" onclick="switchTab('gps')">GPS tagging</button>
       <button id="tabBtnSeries" class="tab-button" onclick="switchTab('series')">Series tagging</button>
+      <button id="tabBtnExif" class="tab-button" onclick="switchTab('exif')">EXIF viewer</button>
     </div>
 
     <div id="tab-gps" class="tab-panel active">
@@ -353,11 +454,11 @@
             <label>GPX file</label>
             <div class="picker">
               <input id="gpxPath" type="text" placeholder="/path/track.gpx">
-              <div class="picker-buttons">
-                <button class="secondary" onclick="pickGPX()">Browse</button>
+                <div class="picker-buttons">
+                  <button class="secondary" onclick="pickGPX()">Browse</button>
+                </div>
               </div>
             </div>
-          </div>
         </div>
 
         <div class="row">
@@ -520,6 +621,53 @@
         </div>
       </div>
     </div>
+
+    <div id="tab-exif" class="tab-panel">
+      <div class="exif-grid">
+        <div class="exif-left">
+          <div class="row">
+            <div>
+              <label>Root folder</label>
+              <div class="picker">
+                <input id="exifRootPath" type="text" placeholder="/photos">
+                <div class="picker-buttons">
+                  <button class="secondary" onclick="pickExifFolder()">Browse</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:4px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted);">
+              <input id="exifIncludeXmp" type="checkbox" style="margin:0;" />
+              Include XMP
+            </label>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <div>
+              <input id="exifSearch" type="text" placeholder="Search files..." aria-label="Search files">
+            </div>
+          </div>
+          <div id="exifTreeNotice" class="exif-hint muted"></div>
+          <div id="exifList" class="file-list"></div>
+          <div class="exif-hint">Double-click a folder to open it. Nested folders are listed inline.</div>
+        </div>
+        <div class="exif-right">
+          <div class="row" style="margin-bottom:6px;">
+            <div>
+              <input id="exifMetaSearch" type="text" placeholder="Search metadata..." aria-label="Search metadata">
+            </div>
+          </div>
+          <div class="exif-header">
+            <div class="exif-path" id="exifSelectedPath">Select a file to inspect EXIF</div>
+            <span id="exifTruncated" class="pill small" style="display:none;">Limited list</span>
+          </div>
+          <div id="status-exif" class="status"></div>
+          <div id="exifDetails" class="exif-details-card">
+            <div class="muted">Pick a file on the left to see its metadata.</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="logModal" class="modal-backdrop">
@@ -578,6 +726,7 @@
       seedSeriesPrefix(true);
       showVersionTag();
       subscribeToProgress();
+      initExifTab();
       document.addEventListener('click', (e) => {
         ['pickerMenu', 'pickerMenuSeries'].forEach(id => {
           const menu = document.getElementById(id);
@@ -595,15 +744,21 @@
       window.runtime.EventsOn('progress', handleProgressEvent);
     }
 
+    const tabButtons = { gps: 'tabBtnGps', series: 'tabBtnSeries', exif: 'tabBtnExif' };
+
     function switchTab(tab) {
-      ['gps', 'series'].forEach(t => {
+      Object.keys(tabButtons).forEach(t => {
         const panel = document.getElementById(`tab-${t}`);
         if (panel) {
           panel.classList.toggle('active', t === tab);
           panel.style.display = t === tab ? 'block' : 'none';
         }
-        document.getElementById(`tabBtn${t === 'gps' ? 'Gps' : 'Series'}`).classList.toggle('active', t === tab);
+        const btn = document.getElementById(tabButtons[t]);
+        if (btn) btn.classList.toggle('active', t === tab);
       });
+      if (tab === 'exif') {
+        ensureExifLoaded();
+      }
       fitWindowToContent();
     }
 
@@ -627,6 +782,19 @@
     let toastTimer = null;
     const showAllFlags = { gps: false, series: false };
     const lastSummary = { gps: null, series: null };
+    const EXIF_LIST_LIMIT = 5000;
+    const exifState = {
+      root: "",
+      tree: [],
+      filtered: [],
+      selected: "",
+      truncated: false,
+      includeXmp: true,
+      lastDetails: null,
+      metaQuery: "",
+    };
+    let exifFilterTimer = null;
+    let exifMetaTimer = null;
 
     function setRunning(context, running) {
       isRunning = running;
@@ -701,6 +869,349 @@
     function hidePickerMenu(id) {
       const menu = document.getElementById(id);
       if (menu) menu.style.display = 'none';
+    }
+
+    function initExifTab() {
+      const list = document.getElementById('exifList');
+      if (list) {
+        list.addEventListener('click', handleExifClick);
+        list.addEventListener('dblclick', handleExifDblClick);
+        list.innerHTML = "<div class=\"file-row\"><span class=\"file-name\" style=\"color:var(--muted);\">Select a folder to load files.</span></div>";
+      }
+      const search = document.getElementById('exifSearch');
+      if (search) {
+        search.addEventListener('input', () => {
+          if (exifFilterTimer) clearTimeout(exifFilterTimer);
+          exifFilterTimer = setTimeout(() => applyExifFilter(true), 140);
+        });
+      }
+      const includeXmp = document.getElementById('exifIncludeXmp');
+      if (includeXmp) {
+        includeXmp.checked = true;
+        exifState.includeXmp = true;
+        includeXmp.addEventListener('change', () => {
+          exifState.includeXmp = includeXmp.checked;
+          if (exifState.selected) {
+            loadExifDetails(exifState.selected);
+          }
+        });
+      }
+      const metaSearch = document.getElementById('exifMetaSearch');
+      if (metaSearch) {
+        metaSearch.addEventListener('input', () => {
+          if (exifMetaTimer) clearTimeout(exifMetaTimer);
+          exifMetaTimer = setTimeout(() => {
+            exifState.metaQuery = metaSearch.value.trim();
+            if (exifState.lastDetails) {
+              renderExifDetails(exifState.lastDetails);
+            }
+          }, 120);
+        });
+      }
+    }
+
+    function ensureExifLoaded() {
+      const input = document.getElementById('exifRootPath');
+      if (!exifState.root && input && input.value.trim()) {
+        exifState.root = input.value.trim();
+      }
+      if (!exifState.root && lastFolderPath) {
+        exifState.root = lastFolderPath;
+        if (input) input.value = lastFolderPath;
+      }
+      if (exifState.tree.length === 0 && exifState.root) {
+        refreshExifTree();
+      }
+    }
+
+    async function pickExifFolder() {
+      try {
+        const result = await getBackend().PickFolder();
+        if (result) {
+          document.getElementById('exifRootPath').value = result;
+          exifState.root = result;
+          exifState.selected = "";
+          await refreshExifTree();
+        }
+      } catch (e) { setStatus('exif', e.message, true); }
+    }
+
+    function setExifLoading(loading, message = "") {
+      const list = document.getElementById('exifList');
+      if (loading && list) {
+        list.innerHTML = `<div class="file-row"><span class="file-name" style="color:var(--muted);">${message || 'Loading...'}</span></div>`;
+      }
+    }
+
+    async function refreshExifTree() {
+      const input = document.getElementById('exifRootPath');
+      const rawPath = input ? input.value.trim() : "";
+      const target = rawPath || exifState.root || lastFolderPath;
+      if (!target) {
+        setStatus('exif', "Select a folder to browse", true);
+        return;
+      }
+      setStatus('exif', "", false);
+      setExifLoading(true, "Loading files...");
+      try {
+        const res = await getBackend().ListExifTree(target);
+        exifState.root = (res && res.root) || target;
+        exifState.tree = (res && Array.isArray(res.children)) ? res.children : [];
+        exifState.truncated = !!(res && res.truncated);
+        exifState.selected = "";
+        exifState.lastDetails = null;
+        if (input) input.value = exifState.root;
+        setExifSelectedPath("Select a file to inspect EXIF");
+        setExifDetailsPlaceholder("Pick a file on the left to see its metadata.");
+        applyExifFilter(true);
+        fitWindowToContent();
+      } catch (e) {
+        setStatus('exif', e.message || String(e), true);
+      } finally {
+        setExifLoading(false);
+      }
+    }
+
+    function applyExifFilter(renderList = false) {
+      const search = document.getElementById('exifSearch');
+      const query = search ? search.value.trim() : "";
+      exifState.filtered = filterFileTree(exifState.tree, query);
+      if (renderList) drawExifList(exifState.filtered);
+    }
+
+    function filterFileTree(nodes, query) {
+      const matcher = makeWildcardMatcher(query);
+      const walk = (items) => {
+        const next = [];
+        (items || []).forEach(item => {
+          const children = item.children ? walk(item.children) : [];
+          const matchSelf = matcher(item.name);
+          if (matchSelf || children.length) {
+            next.push({
+              name: item.name,
+              path: item.path,
+              isDir: !!item.isDir,
+              children,
+            });
+          }
+        });
+        return next;
+      };
+      return walk(nodes || []);
+    }
+
+    function makeWildcardMatcher(query) {
+      if (!query) return () => true;
+      let pattern = query;
+      if (!pattern.includes("*")) {
+        pattern = `*${pattern}*`;
+      }
+      const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+      const re = new RegExp(`^${escaped}$`, "i");
+      return (text) => re.test(text || "");
+    }
+
+    function filterExifDetails(details, query) {
+      if (!details || !Array.isArray(details.fields)) return details;
+      if (!query) return details;
+      const text = query.toLowerCase();
+      const contains = (val) => (val || "").toString().toLowerCase().includes(text);
+      const filtered = details.fields.filter(f => contains(f.label) || contains(f.value));
+      return { ...details, fields: filtered };
+    }
+
+    function drawExifList(nodes) {
+      const list = document.getElementById('exifList');
+      if (!list) return;
+      list.innerHTML = "";
+      const search = document.getElementById('exifSearch');
+      const query = search ? search.value.trim() : "";
+      if (!nodes || nodes.length === 0) {
+        const msg = query ? "No files match the filter." : "No supported files found in this folder.";
+        list.innerHTML = `<div class="file-row"><span class="file-name" style="color:var(--muted);">${msg}</span></div>`;
+        updateExifNotice(true);
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      const renderLevel = (items, depth) => {
+        items.forEach(item => {
+          const row = document.createElement('div');
+          row.className = `file-row ${item.isDir ? 'dir' : 'file'}`;
+          if (!item.isDir && item.path === exifState.selected) {
+            row.classList.add('active');
+          }
+          row.dataset.path = item.path;
+          row.dataset.isdir = item.isDir ? "1" : "0";
+          row.style.paddingLeft = `${depth * 14 + 8}px`;
+
+          const icon = document.createElement('span');
+          icon.className = 'file-icon';
+          icon.textContent = item.isDir ? "📁" : "📷";
+          const name = document.createElement('span');
+          name.className = 'file-name';
+          name.textContent = item.name;
+          row.appendChild(icon);
+          row.appendChild(name);
+          frag.appendChild(row);
+          if (item.children && item.children.length) {
+            renderLevel(item.children, depth + 1);
+          }
+        });
+      };
+      renderLevel(nodes, 0);
+      list.appendChild(frag);
+      updateExifNotice(false);
+    }
+
+    function updateExifNotice(noMatches) {
+      const notice = document.getElementById('exifTreeNotice');
+      const pill = document.getElementById('exifTruncated');
+      if (pill) {
+        pill.style.display = exifState.truncated ? 'inline-flex' : 'none';
+      }
+      if (!notice) return;
+      const parts = [];
+      if (exifState.truncated) {
+        parts.push(`Showing first ${EXIF_LIST_LIMIT} items. Use search to narrow results.`);
+      }
+      if (noMatches) {
+        parts.push("Nothing matches the current filter.");
+      }
+      notice.textContent = parts.join(" ");
+      notice.style.display = parts.length ? 'block' : 'none';
+    }
+
+    function setActiveFileRow(path) {
+      const list = document.getElementById('exifList');
+      if (!list) return;
+      const rows = list.querySelectorAll('.file-row');
+      rows.forEach(row => {
+        const isFile = row.dataset.isdir !== "1";
+        row.classList.toggle('active', isFile && path && row.dataset.path === path);
+      });
+    }
+
+    function handleExifClick(e) {
+      const row = e.target.closest('.file-row');
+      if (!row || !row.dataset.path) return;
+      const isDir = row.dataset.isdir === "1";
+      const path = row.dataset.path;
+      if (isDir) {
+        exifState.selected = "";
+        setActiveFileRow(null);
+        setExifSelectedPath(`Folder: ${path} (double-click to open)`);
+        return;
+      }
+      exifState.selected = path;
+      setActiveFileRow(path);
+      loadExifDetails(path);
+    }
+
+    function handleExifDblClick(e) {
+      const row = e.target.closest('.file-row');
+      if (!row || !row.dataset.path) return;
+      const isDir = row.dataset.isdir === "1";
+      const path = row.dataset.path;
+      if (isDir) {
+        const input = document.getElementById('exifRootPath');
+        if (input) input.value = path;
+        exifState.root = path;
+        exifState.selected = "";
+        refreshExifTree();
+        return;
+      }
+      exifState.selected = path;
+      setActiveFileRow(path);
+      loadExifDetails(path);
+    }
+
+    function setExifSelectedPath(text) {
+      const el = document.getElementById('exifSelectedPath');
+      if (el) {
+        el.textContent = text || "Select a file to inspect EXIF";
+      }
+    }
+
+    function setExifDetailsPlaceholder(message) {
+      const container = document.getElementById('exifDetails');
+      if (container) {
+        container.innerHTML = `<div class="muted">${message}</div>`;
+      }
+    }
+
+    async function loadExifDetails(path) {
+      if (!path) return;
+      setStatus('exif', "", false);
+      setExifDetailsPlaceholder("Loading EXIF…");
+      setExifSelectedPath(path);
+      try {
+        const res = await getBackend().ReadExif(path, !!exifState.includeXmp);
+        exifState.lastDetails = res;
+        exifState.metaQuery = "";
+        const metaInput = document.getElementById('exifMetaSearch');
+        if (metaInput) metaInput.value = "";
+        renderExifDetails(res);
+      } catch (e) {
+        setStatus('exif', e.message || String(e), true);
+        setExifDetailsPlaceholder("Failed to read EXIF.");
+      }
+    }
+
+    function renderExifDetails(data) {
+      const container = document.getElementById('exifDetails');
+      if (!container) return;
+      container.innerHTML = "";
+      if (exifState.metaQuery) {
+        const filtered = filterExifDetails(data, exifState.metaQuery);
+        if (filtered && Array.isArray(filtered.fields)) {
+          data = filtered;
+        }
+      }
+      const fields = data && Array.isArray(data.fields) ? data.fields : [];
+      if (!fields.length) {
+        setExifDetailsPlaceholder("No EXIF data found for this file.");
+        return;
+      }
+      const groups = {};
+      fields.forEach(f => {
+        const key = f.group || "Details";
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(f);
+      });
+
+      Object.keys(groups).sort().forEach((groupName, idx) => {
+        const detail = document.createElement('details');
+        detail.className = 'exif-group';
+        detail.open = idx === 0;
+
+        const summary = document.createElement('summary');
+        summary.textContent = `${groupName} (${groups[groupName].length})`;
+        detail.appendChild(summary);
+
+        groups[groupName].forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'exif-row';
+          const label = document.createElement('div');
+          label.className = 'exif-label';
+          const isXmp = typeof item.label === 'string' && /\sxmp$/i.test(item.label);
+          const cleanLabel = isXmp ? item.label.replace(/\s*xmp$/i, "") : item.label;
+          label.textContent = cleanLabel;
+          if (isXmp) {
+            const badge = document.createElement('span');
+            badge.className = 'pill small xmp-badge';
+            badge.textContent = 'XMP';
+            label.appendChild(badge);
+          }
+          const value = document.createElement('div');
+          value.className = 'exif-value';
+          value.textContent = item.value;
+          row.appendChild(label);
+          row.appendChild(value);
+          detail.appendChild(row);
+        });
+
+        container.appendChild(detail);
+      });
     }
 
     async function runProcess() {

@@ -1,0 +1,374 @@
+ExifTool Version Number         : 13.10
+File Name                       : IMG_2850.CR3
+Directory                       : tests/100CANON
+File Size                       : 27 MB
+File Modification Date/Time     : 2025:12:25 10:50:10+01:00
+File Access Date/Time           : 2025:12:25 10:50:50+01:00
+File Inode Change Date/Time     : 2025:12:25 10:50:10+01:00
+File Permissions                : -rwxr-xr-x
+File Type                       : CR3
+File Type Extension             : cr3
+MIME Type                       : image/x-canon-cr3
+Major Brand                     : Canon Raw (.CRX)
+Minor Version                   : 0.0.1
+Compatible Brands               : crx , isom
+Compressor Version              : CanonCR3_001/00.11.00/00.00.00
+Image Width                     : 6000
+Image Height                    : 4000
+Bits Per Sample                 : 8 8 8
+Compression                     : JPEG (old-style)
+Make                            : Canon
+Camera Model Name               : Canon EOS R8
+Orientation                     : Horizontal (normal)
+Resolution Unit                 : inches
+Artist                          : Ivan Korbakov
+Copyright                       : @ Ivan Korbakov, all rights reserved.
+Exposure Time                   : 1/320
+F Number                        : 4.0
+Exposure Program                : Manual
+ISO                             : 8000
+Sensitivity Type                : Recommended Exposure Index
+Recommended Exposure Index      : 8000
+Exif Version                    : 0231
+Date/Time Original              : 2025:12:18 18:29:11
+Offset Time                     : +01:00
+Offset Time Original            : +01:00
+Offset Time Digitized           : +01:00
+Components Configuration        : Y, Cb, Cr, -
+Shutter Speed Value             : 1/332
+Aperture Value                  : 4.0
+Flash                           : No Flash
+Focal Length                    : 28.0 mm
+User Comment                    : 
+Sub Sec Time                    : 16
+Sub Sec Time Original           : 16
+Sub Sec Time Digitized          : 16
+Flashpix Version                : 0100
+Exif Image Width                : 6000
+Exif Image Height               : 4000
+Focal Plane X Resolution        : 4234.297812
+Focal Plane Y Resolution        : 4232.804233
+Focal Plane Resolution Unit     : inches
+Custom Rendered                 : Normal
+Exposure Mode                   : Manual
+Scene Capture Type              : Standard
+Serial Number                   : 183022004336
+Lens Info                       : 28mm f/0
+Lens Serial Number              : 4512001062
+Macro Mode                      : Normal
+Self Timer                      : Off
+Quality                         : RAW
+Canon Flash Mode                : Off
+Continuous Drive                : Continuous, Low
+Focus Mode                      : One-shot AF (Live View)
+Record Mode                     : CR3
+Canon Image Size                : n/a
+Easy Mode                       : Manual
+Digital Zoom                    : None
+Contrast                        : Normal
+Saturation                      : Normal
+Metering Mode                   : Evaluative
+Focus Range                     : Auto
+Canon Exposure Mode             : Manual
+Lens Type                       : Canon RF 50mm F1.2L USM or other Canon RF Lens
+Max Focal Length                : 28 mm
+Min Focal Length                : 28 mm
+Focal Units                     : 1/mm
+Max Aperture                    : 2.8
+Min Aperture                    : 23
+Flash Activity                  : 0
+Flash Bits                      : E-TTL
+Focus Continuous                : Continuous
+Image Stabilization             : On (2)
+Zoom Source Width               : 0
+Zoom Target Width               : 0
+Manual Flash Output             : n/a
+Color Tone                      : Normal
+SRAW Quality                    : n/a
+Clarity                         : 0
+Focal Type                      : Fixed
+Auto ISO                        : 100
+Base ISO                        : 8300
+Measured EV                     : 3.12
+Target Aperture                 : 4
+Target Exposure Time            : 1/323
+Exposure Compensation           : 0
+White Balance                   : Auto
+Slow Shutter                    : None
+Shot Number In Continuous Burst : 0
+Optical Zoom Code               : 0
+Camera Temperature              : 20 C
+Flash Guide Number              : 0
+Flash Exposure Compensation     : 0
+Auto Exposure Bracketing        : Off
+AEB Bracket Value               : 0
+Control Mode                    : Camera Local Control
+Measured EV 2                   : -16
+Bulb Duration                   : 0
+Camera Type                     : EOS High-end
+Auto Rotate                     : None
+ND Filter                       : Off
+Canon Image Type                : Canon EOS R8
+Canon Firmware Version          : Firmware Version 1.5.0
+Owner Name                      : 
+Canon Model ID                  : EOS R8
+Thumbnail Image Valid Area      : 0 159 6 113
+AF Area Mode                    : AF Point Expansion (4 point)
+Num AF Points                   : 1053
+Valid AF Points                 : 1
+Canon Image Width               : 6000
+Canon Image Height              : 4000
+AF Image Width                  : 6000
+AF Image Height                 : 4000
+AF Area Widths                  : 432 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+AF Area Heights                 : 432 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+AF Area X Positions             : 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+AF Area Y Positions             : 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+AF Points In Focus              : 0
+AF Points Selected              : 0
+Image Unique ID                 : 8a53c40b6bf044a6962b89cefed8959b
+Time Zone                       : +01:00
+Time Zone City                  : Paris
+Daylight Savings                : Off
+Battery Type                    : LP-E17
+Bracket Mode                    : Off
+Bracket Value                   : 0
+Bracket Shot Number             : 0
+Raw Jpg Size                    : Large
+WB Bracket Mode                 : Off
+WB Bracket Value AB             : 0
+WB Bracket Value GM             : 0
+Live View Shooting              : On
+Focus Distance Upper            : 10.58 m
+Focus Distance Lower            : 5.29 m
+Shutter Mode                    : Electronic First Curtain
+Flash Exposure Lock             : Off
+Anti Flicker                    : Off
+RF Lens Type                    : Canon RF 28mm F2.8 STM
+Lens Model                      : RF28mm F2.8 STM
+Internal Serial Number          : MQ0651577
+Dust Removal Data               : (Binary data 1024 bytes, use -b option to extract)
+Crop Left Margin                : 0
+Crop Right Margin               : 0
+Crop Top Margin                 : 0
+Crop Bottom Margin              : 0
+Exposure Level Increments       : 1/3 Stop
+ISO Speed Increments            : 1/3 Stop
+AEB Auto Cancel                 : On
+AEB Sequence                    : -,0,+
+AEB Shot Count                  : Unknown (5 0)
+Safety Shift                    : Disable
+Aperture Range                  : Manual: Closed 64; Open 1; Auto: Closed 18; Open 2.6
+Same Exposure For New Aperture  : Disable
+AE Lock Meter Mode After Focus  : Evaluative
+Dial Direction Tv Av            : Normal
+Custom Controls                 : 19 0 19 0 0 0 0 14 3 0 0 0 0 14 18 0 4 0 53 0 25 0 37 0 13 0 14 2 91 2 5 7 29 0 5 0 5 0 5 0 5 0 23 0 0 0 0 0 7 0 29 0 54 0 78 0 91 0 103 0 52 0 105 0 53 0 4186174 0 3 5376 3840 0 0 0 0 0 0 0 0 65535 0 0 5200 0 0 14 0 0 0 0 0 0 65535 0 7 3 4 31 7 1 2 0 0 1 29 0 10 0 47 0
+Shutter Release Without Lens    : Disable
+Control Ring Rotation           : Normal
+Add Aspect Ratio Info           : Off
+Default Erase Option            : Cancel selected
+Retract Lens On Power Off       : Enable
+Add IPTC Information            : Disable
+Audio Compression               : Enable
+Aspect Ratio                    : 3:2
+Cropped Image Width             : 6000
+Cropped Image Height            : 4000
+Cropped Image Left              : 0
+Cropped Image Top               : 0
+Tone Curve                      : Standard
+Sharpness                       : 0
+Sharpness Frequency             : n/a
+Sensor Red Level                : 0
+Sensor Blue Level               : 0
+White Balance Red               : 0
+White Balance Blue              : 0
+Color Temperature               : 5200
+Picture Style                   : Faithful
+Digital Gain                    : 0
+WB Shift AB                     : 0
+WB Shift GM                     : 0
+Unsharp Mask Fineness           : 2
+Unsharp Mask Threshold          : 2
+Measured RGGB                   : 1035 1024 1024 399
+Color Space                     : sRGB
+VRD Offset                      : 0
+Sensor Width                    : 6188
+Sensor Height                   : 4120
+Sensor Left Border              : 168
+Sensor Top Border               : 108
+Sensor Right Border             : 6167
+Sensor Bottom Border            : 4107
+Black Mask Left Border          : 0
+Black Mask Top Border           : 0
+Black Mask Right Border         : 0
+Black Mask Bottom Border        : 0
+Picture Style User Def          : Auto; Auto; Auto
+Picture Style PC                : None; None; None
+Custom Picture Style File Name  : 
+AF Micro Adj Mode               : Disable
+AF Micro Adj Value              : 0
+Peripheral Lighting Setting     : On
+Chromatic Aberration Setting    : On
+Distortion Correction Setting   : On
+Digital Lens Optimizer Setting  : Off
+Peripheral Illumination Corr    : Off
+Auto Lighting Optimizer         : Off
+Highlight Tone Priority         : Off
+Long Exposure Noise Reduction   : Auto
+High ISO Noise Reduction        : Low
+Digital Lens Optimizer          : Off
+Dual Pixel Raw                  : Off
+Ambience Selection              : Standard
+Multi Exposure                  : Off
+Multi Exposure Control          : Additive
+Multi Exposure Shots            : 0
+Grainy B/W Filter               : Off
+Soft Focus Filter               : Off
+Toy Camera Filter               : Off
+Miniature Filter                : Off
+Miniature Filter Orientation    : Horizontal
+Miniature Filter Position       : 0
+Miniature Filter Parameter      : 0
+Fisheye Filter                  : Off
+Painting Filter                 : Off
+Watercolor Filter               : Off
+HDR                             : Off
+HDR Effect                      : Natural
+AF Config Tool                  : Case 2
+AF Tracking Sensitivity         : -1
+AF Accel/Decel Tracking         : 0
+AF Point Switching              : -1
+AI Servo First Image            : Equal Priority
+AI Servo Second Image           : Equal Priority
+USM Lens Electronic MF          : One-Shot -> Enabled (magnify)
+AF Assist Beam                  : Enable
+One Shot AF Release             : Focus Priority
+Auto AF Point Sel EOS iTR AF    : Enable
+Lens Drive When AF Impossible   : Continue Focus Search
+Select AF Area Selection Mode   : Single-point AF, Auto, Zone AF, AF Point Expansion (4 point), Spot AF, AF Point Expansion (8 point), [6], [8], [9], [10], [11], [12], [13], [14]
+AF Area Selection Method        : M-Fn Button
+Orientation Linked AF           : Same for Vert/Horiz Points
+Manual AF Point Sel Pattern     : Stops at AF Area Edges
+AF Point Display During Focus   : Selected (constant)
+VF Display Illumination         : Auto
+AF Status Viewfinder            : Show in Field of View
+Initial AF Point In Servo       : Auto
+Subject To Detect               : Unknown (4)
+Eye Detection                   : On
+Raw Burst Image Num             : 0
+Raw Burst Image Count           : 0
+Exif Byte Order                 : Little-endian (Intel, II)
+GPS Version ID                  : 2.3.0.0
+GPS Altitude Ref                : Above Sea Level
+GPS Satellites                  : 
+GPS Status                      : Unknown ()
+GPS Measure Mode                : Unknown ()
+Thumbnail Image                 : (Binary data 6536 bytes, use -b option to extract)
+Movie Header Version            : 0
+Create Date                     : 2025:12:18 18:29:11+01:00
+Modify Date                     : 2025:12:18 18:29:11+01:00
+Time Scale                      : 1
+Duration                        : 1.00 s
+Preferred Rate                  : 1
+Preferred Volume                : 100.00%
+Preview Time                    : 0 s
+Preview Duration                : 0 s
+Poster Time                     : 0 s
+Selection Time                  : 0 s
+Selection Duration              : 0 s
+Current Time                    : 0 s
+Next Track ID                   : 5
+Track Header Version            : 0
+Track Create Date               : 2025:12:18 18:29:11+01:00
+Track Modify Date               : 2025:12:18 18:29:11+01:00
+Track ID                        : 1
+Track Duration                  : 1.00 s
+Track Layer                     : 0
+Track Volume                    : 0.00%
+Sample Time                     : 0 s
+Sample Duration                 : 1.00 s
+Jpg From Raw                    : (Binary data 1122949 bytes, use -b option to extract)
+Graphics Mode                   : srcCopy
+Op Color                        : 0 0 0
+Compressor ID                   : CRAW
+Source Image Width              : 6000
+Source Image Height             : 4000
+X Resolution                    : 72
+Y Resolution                    : 72
+Bit Depth                       : 24
+Video Frame Rate                : 1
+Matrix Structure                : 1 0 0 0 1 0 0 0 1
+Media Header Version            : 0
+Media Create Date               : 2025:12:18 18:29:11+01:00
+Media Modify Date               : 2025:12:18 18:29:11+01:00
+Media Time Scale                : 1
+Media Duration                  : 1.00 s
+Media Language Code             : eng
+Handler Type                    : NRT Metadata
+Meta Format                     : CTMD
+Time Stamp                      : 2025:12:18 18:29:11.16
+Color Data Version              : 48 (R7, R10, R6 Mark II)
+WB RGGB Levels As Shot          : 1372 1024 1024 1872
+Color Temp As Shot              : 3495
+WB RGGB Levels Auto             : 1372 1024 1024 1872
+Color Temp Auto                 : 3495
+WB RGGB Levels Measured         : 1372 1024 1024 1872
+Color Temp Measured             : 3495
+WB RGGB Levels Daylight         : 1960 1024 1024 1511
+Color Temp Daylight             : 5200
+WB RGGB Levels Shade            : 2265 1024 1024 1296
+Color Temp Shade                : 7000
+WB RGGB Levels Cloudy           : 2110 1024 1024 1402
+Color Temp Cloudy               : 6000
+WB RGGB Levels Tungsten         : 1372 1024 1024 2245
+Color Temp Tungsten             : 3200
+WB RGGB Levels Fluorescent      : 1683 1024 1024 2166
+Color Temp Fluorescent          : 3683
+WB RGGB Levels Kelvin           : 1960 1024 1024 1511
+Color Temp Kelvin               : 5190
+WB RGGB Levels Flash            : 2153 1024 1024 1376
+Color Temp Flash                : 6258
+Per Channel Black Level         : 2048 2048 2048 2048
+Normal White Level              : 13535
+Specular White Level            : 14888
+Linearity Upper Margin          : 12735
+Vignetting Corr Version         : 0
+Peripheral Lighting             : On
+Distortion Correction           : On
+Chromatic Aberration Corr       : On
+Peripheral Lighting Value       : 1
+Distortion Correction Value     : 0
+Original Image Width            : 100
+Original Image Height           : 100
+Rating                          : 0
+Preview Image                   : (Binary data 158744 bytes, use -b option to extract)
+Media Data Size                 : 26770066
+Media Data Offset               : 274432
+Flash Exposure Compensation     : 0
+Drive Mode                      : Continuous Shooting
+Flash Type                      : Built-In Flash
+Lens                            : 28.0 mm
+Red Eye Reduction               : Off
+Shooting Mode                   : Manual
+Shutter Curtain Sync            : 1st-curtain sync
+WB RGGB Levels                  : 1372 1024 1024 1872
+Aperture                        : 4.0
+Blue Balance                    : 1.828125
+Image Size                      : 6000x4000
+Lens ID                         : Canon RF 28mm F2.8 STM
+Megapixels                      : 24.0
+Red Balance                     : 1.339844
+Scale Factor To 35 mm Equivalent: 1.0
+Shutter Speed                   : 1/320
+Create Date                     : 2025:12:18 18:29:11.16+01:00
+Date/Time Original              : 2025:12:18 18:29:11.16+01:00
+Modify Date                     : 2025:12:18 18:29:11.16+01:00
+Avg Bitrate                     : 214 Mbps
+Rotation                        : 0
+Lens                            : 28.0 mm (35 mm equivalent: 28.0 mm)
+Circle Of Confusion             : 0.030 mm
+Depth Of Field                  : inf (3.59 m - inf)
+Field Of View                   : 65.5 deg
+Focal Length                    : 28.0 mm (35 mm equivalent: 28.0 mm)
+Hyperfocal Distance             : 6.52 m
+Light Value                     : 6.0
