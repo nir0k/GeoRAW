@@ -61,9 +61,10 @@ Key flags:
 - `--overwrite-series` replace existing series keywords when true.
 
 ### GUI
-The GUI has two tabs:
+The GUI has three tabs:
 - **GPS tagging** — existing GPX workflow.
 - **Series tagging** — select photos (file/folder/glob), mode (auto/hdr/focus), prefix/start index, tag names, recursion, overwrite toggle, and run. Results show per-file status plus series type/ID tags; logs available via the modal.
+- **EXIF viewer** — browse a folder (nested directories inline), filter files with auto-added `*` wildcards, double-click folders to drill down, and view flattened EXIF fields for supported photo formats (RAW/JPEG/HEIF/HIF/AVIF/TIFF). Optional toggle to include/exclude XMP (sidecar) fields. Requires `exiftool` to be installed and available in `PATH` (Linux/macOS packages or portable EXE on Windows).
 
 ## GUI (Wails)
 A simple Wails UI is available to run the same workflow. Launch:
@@ -85,6 +86,11 @@ Notes:
   ```bash
   georaw -g track.gpx -i /photos -r --time-offset=-30s --auto-offset=false
   ```
+
+### EXIF viewer dependency
+To view full EXIF data in the GUI, `exiftool` must be in your `PATH`:
+- Linux/macOS: install via your package manager (e.g., `apt install libimage-exiftool-perl`, `brew install exiftool`).
+- Windows: download `exiftool(-k).exe` from exiftool.org, rename to `exiftool.exe`, and place it next to the GeoRAW GUI exe or in `%PATH%` (Chocolatey: `choco install exiftool`).
 
 ## Build via Makefile
 - CLI Linux: `make cli-linux` → `bin/georaw.linux-amd64`
