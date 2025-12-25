@@ -10,15 +10,16 @@ import (
 
 // Options represents user-provided CLI parameters.
 type Options struct {
-	GPXPath    string
-	InputPath  string
-	Recursive  bool
-	LogLevel   string
-	LogFile    string
-	TimeOffset time.Duration
-	AutoOffset bool
-	Overwrite  bool
+	GPXPath      string
+	InputPath    string
+	Recursive    bool
+	LogLevel     string
+	LogFile      string
+	TimeOffset   time.Duration
+	AutoOffset   bool
+	Overwrite    bool
 	PrintSummary bool
+	Progress     func(done, total int)
 }
 
 // Validate performs basic validation and assigns defaults where needed.

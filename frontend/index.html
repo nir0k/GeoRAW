@@ -192,6 +192,31 @@
       overflow: auto;
       display: none;
     }
+    .result-group {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+    .result-group summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: #e5e7eb;
+    }
+    .result-group summary::-webkit-details-marker { display: none; }
+    .result-group summary::after {
+      content: "▸";
+      margin-left: auto;
+      color: #9ca3af;
+      transition: transform 0.2s ease;
+    }
+    .result-group[open] summary::after { transform: rotate(90deg); }
+    .result-body { padding: 0 10px 10px 10px; }
     .result-row {
       padding: 10px;
       border: 1px solid rgba(255,255,255,0.06);
@@ -389,6 +414,10 @@
         <div id="status-gps" class="status"></div>
         <div id="results-gps" class="status results"></div>
         <div id="resultsActions-gps" class="actions" style="display:none; margin-top:4px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#9ca3af;">
+            <input type="checkbox" id="showAll-gps" onchange="toggleShowAll('gps', this.checked)" />
+            Show all
+          </label>
           <button class="secondary" onclick="clearResults('gps')">Clear</button>
           <button class="secondary" onclick="showLog()">View log</button>
           <button class="secondary" onclick="openFolder()">Open folder</button>
@@ -481,6 +510,10 @@
         <div id="status-series" class="status"></div>
         <div id="results-series" class="status results"></div>
         <div id="resultsActions-series" class="actions" style="display:none; margin-top:4px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#9ca3af;">
+            <input type="checkbox" id="showAll-series" onchange="toggleShowAll('series', this.checked)" />
+            Show all
+          </label>
           <button class="secondary" onclick="clearResults('series')">Clear</button>
           <button class="secondary" onclick="showLog()">View log</button>
           <button class="secondary" onclick="openFolder()">Open folder</button>
@@ -544,6 +577,7 @@
       applyLogLevelColor('logLevelSeries');
       seedSeriesPrefix(true);
       showVersionTag();
+      subscribeToProgress();
       document.addEventListener('click', (e) => {
         ['pickerMenu', 'pickerMenuSeries'].forEach(id => {
           const menu = document.getElementById(id);
@@ -555,6 +589,11 @@
         });
       });
     });
+
+    function subscribeToProgress() {
+      if (!(window.runtime && window.runtime.EventsOn)) return;
+      window.runtime.EventsOn('progress', handleProgressEvent);
+    }
 
     function switchTab(tab) {
       ['gps', 'series'].forEach(t => {
@@ -586,6 +625,8 @@
     let cachedLog = "";
     let lastFolderPath = "";
     let toastTimer = null;
+    const showAllFlags = { gps: false, series: false };
+    const lastSummary = { gps: null, series: null };
 
     function setRunning(context, running) {
       isRunning = running;
@@ -604,11 +645,29 @@
       const bar = progress ? progress.querySelector('.progress-bar') : null;
       if (progress && bar) {
         progress.style.display = running ? 'block' : 'none';
-        bar.classList.remove('complete');
+        bar.classList.remove('complete', 'indeterminate');
+        bar.style.marginLeft = '0';
         if (running) {
-          bar.classList.add('indeterminate');
+          bar.style.width = '0%';
         }
       }
+    }
+
+    function handleProgressEvent(payload) {
+      const { context, current, total } = payload || {};
+      if (!context) return;
+      updateProgressBar(context, current, total);
+    }
+
+    function updateProgressBar(context, current, total) {
+      const progress = document.getElementById(`progress-${context}`);
+      const bar = progress ? progress.querySelector('.progress-bar') : null;
+      if (!progress || !bar || !Number.isFinite(total) || total <= 0) return;
+      const pct = Math.max(0, Math.min(100, Math.round((Number(current) / Number(total)) * 100)));
+      progress.style.display = 'block';
+      bar.classList.remove('indeterminate', 'complete');
+      bar.style.marginLeft = '0';
+      bar.style.width = `${pct}%`;
     }
 
     async function pickGPX() {
@@ -731,6 +790,7 @@
 
     function renderResults(context, summary) {
       if (!summary) return;
+      lastSummary[context] = summary;
       const hasErrors = (summary.failed > 0) || (summary.meta_errors > 0);
       if (hasErrors) {
         const status = `Finished with issues. failed=${summary.failed} meta_errors=${summary.meta_errors}`;
@@ -741,45 +801,97 @@
         showToast("Finished", "info");
       }
 
-      let html = "";
-      (summary.files || []).forEach(item => {
-        let tagInfo = null;
+      const filtered = (summary.files || []).filter(item => shouldShowStatus(context, item.status));
+
+      const seriesGroups = new Map();
+      const skippedGroup = [];
+      const ungrouped = [];
+
+      filtered.forEach(item => {
         const message = item.message || "";
         const tagMatch = message.match(/^([a-zA-Z0-9_]+)\s+\[([^\]]+)\]$/);
-        if (tagMatch) {
-          tagInfo = { type: tagMatch[1], id: tagMatch[2] };
+        const tagInfo = tagMatch ? { type: tagMatch[1], id: tagMatch[2] } : null;
+
+        if (item.status === 'skipped') {
+          skippedGroup.push({ item, tagInfo });
+          return;
         }
+        if (tagInfo && tagInfo.id) {
+          const key = tagInfo.id;
+          if (!seriesGroups.has(key)) {
+            seriesGroups.set(key, { tag: tagInfo.type, id: tagInfo.id, items: [] });
+          }
+          seriesGroups.get(key).items.push({ item, tagInfo });
+        } else {
+          ungrouped.push({ item, tagInfo });
+        }
+      });
 
-        const colors = {
-          processed: { bg: "#34d399", fg: "#0f172a" },
-          unchanged: { bg: "#a5b4fc", fg: "#0f172a" },
-          skipped: { bg: "#9ca3af", fg: "#0f172a" },
-          out_of_track: { bg: "#fbbf24", fg: "#0f172a" },
-          meta_error: { bg: "#f97316", fg: "#0f172a" },
-          failed: { bg: "#f87171", fg: "#0f172a" },
-        };
-        const tagColors = {
-          hdr_mode: { bg: "#38bdf8", fg: "#0f172a" },
-          focus_br: { bg: "#f59e0b", fg: "#0f172a" },
-        };
+      const colors = {
+        processed: { bg: "#34d399", fg: "#0f172a" },
+        unchanged: { bg: "#a5b4fc", fg: "#0f172a" },
+        skipped: { bg: "#9ca3af", fg: "#0f172a" },
+        out_of_track: { bg: "#fbbf24", fg: "#0f172a" },
+        meta_error: { bg: "#f97316", fg: "#0f172a" },
+        failed: { bg: "#f87171", fg: "#0f172a" },
+      };
+      const tagColors = {
+        hdr_mode: { bg: "#38bdf8", fg: "#0f172a" },
+        focus_br: { bg: "#f59e0b", fg: "#0f172a" },
+      };
+
+      const renderTagBadge = (tagType) => {
+        if (!tagType) return "";
+        const tagPalette = tagColors[tagType] || { bg: "#cbd5e1", fg: "#0f172a" };
+        return `<span class="badge tag" style="background:${tagPalette.bg};color:${tagPalette.fg};">${tagType}</span>`;
+      };
+
+      const renderRow = ({ item, tagInfo }) => {
         const palette = colors[item.status] || { bg: "#e5e7eb", fg: "#0f172a" };
-        const tagPalette = tagInfo ? (tagColors[tagInfo.type] || { bg: "#cbd5e1", fg: "#0f172a" }) : null;
-        const idLine = tagInfo ? `id: [${tagInfo.id}]` : (message ? message : "");
+        const idLine = tagInfo ? `id: [${tagInfo.id}]` : (item.message || "");
 
-        html += `<div class="result-row">
+        return `<div class="result-row">
           <div class="result-info">
             <span class="result-path">${item.path}</span>
             ${idLine ? `<span class="result-msg">${idLine}</span>` : ""}
           </div>
           <div class="badges">
-            ${tagInfo ? `<span class="badge tag" style="background:${tagPalette.bg};color:${tagPalette.fg};">${tagInfo.type}</span>` : ""}
+            ${tagInfo ? renderTagBadge(tagInfo.type) : ""}
             <span class="badge" style="background:${palette.bg};color:${palette.fg};">${item.status}</span>
           </div>
         </div>`;
-      });
+      };
+
+      const renderGroup = (title, items, tagType) => {
+        const rows = items.map(renderRow).join("");
+        return `<details class="result-group">
+          <summary>${tagType ? renderTagBadge(tagType) + " " : ""}${title}</summary>
+          <div class="result-body">${rows}</div>
+        </details>`;
+      };
+
+      let html = "";
+      Array.from(seriesGroups.values())
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .forEach(group => {
+          const label = `Series ${group.id} (${group.items.length})`;
+          html += renderGroup(label, group.items, group.tag);
+        });
+
+      if (skippedGroup.length) {
+        const label = `Skipped (${skippedGroup.length})`;
+        html += renderGroup(label, skippedGroup);
+      }
+
+      if (ungrouped.length) {
+        html += ungrouped.map(renderRow).join("");
+      }
       const resultsEl = document.getElementById(`results-${context}`);
       if (resultsEl) {
-        resultsEl.innerHTML = html || "<div style='color:#9ca3af;'>No files processed.</div>";
+        const fallbackMsg = filtered.length === 0 && (summary.files && summary.files.length) ?
+          "<div style='color:#9ca3af;'>No files match the filter. Turn on \"Show all\" to include skipped ones.</div>" :
+          "<div style='color:#9ca3af;'>No files processed.</div>";
+        resultsEl.innerHTML = html || fallbackMsg;
         resultsEl.style.display = summary.files && summary.files.length ? 'block' : 'none';
       }
       const actions = document.getElementById(`resultsActions-${context}`);
@@ -787,7 +899,8 @@
         actions.style.display = summary.files && summary.files.length ? 'flex' : 'none';
       }
       if (summary.files && summary.files.length) {
-        const firstPath = summary.files[0].path || "";
+        const chosen = (filtered[0]?.path ? filtered[0].path : summary.files[0].path) || "";
+        const firstPath = chosen || "";
         lastFolderPath = extractDir(firstPath);
       }
     }
@@ -810,6 +923,7 @@
       bar.classList.remove('indeterminate');
       bar.classList.add('complete');
       bar.style.marginLeft = '0';
+      bar.style.width = '100%';
     }
 
     function resetProgress(context, hide = true) {
@@ -818,7 +932,22 @@
       if (!progress || !bar) return;
       bar.classList.remove('indeterminate', 'complete');
       bar.style.marginLeft = '0';
+      bar.style.width = '0%';
       if (hide) progress.style.display = 'none';
+    }
+
+    function shouldShowStatus(context, status) {
+      if (showAllFlags[context]) return true;
+      const visible = new Set(['processed', 'failed', 'meta_error', 'out_of_track']);
+      return visible.has(status);
+    }
+
+    function toggleShowAll(context, checked) {
+      showAllFlags[context] = !!checked;
+      const summary = lastSummary[context];
+      if (summary) {
+        renderResults(context, summary);
+      }
     }
 
     function clearResults(context) {
@@ -829,6 +958,10 @@
       }
       const actions = document.getElementById(`resultsActions-${context}`);
       if (actions) actions.style.display = 'none';
+      showAllFlags[context] = false;
+      lastSummary[context] = null;
+      const checkbox = document.getElementById(`showAll-${context}`);
+      if (checkbox) checkbox.checked = false;
       setStatus(context, "", false);
       resetProgress(context);
       cachedLog = "";

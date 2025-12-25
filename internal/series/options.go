@@ -31,6 +31,7 @@ type Options struct {
 	HDRTag       string
 	FocusTag     string
 	PrintSummary bool
+	Progress     func(done, total int)
 }
 
 // Validate performs basic validation and assigns defaults where needed.
