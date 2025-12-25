@@ -18,6 +18,9 @@
       --debug: #cbd5e1;
     }
     * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+    }
     body {
       margin: 0;
       font-family: "Inter", system-ui, -apple-system, sans-serif;
@@ -26,16 +29,19 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-      padding: 32px 16px;
+      align-items: stretch;
+      padding: 12px;
     }
     .shell {
-      width: min(1000px, 100%);
+      width: calc(100vw - 24px);
+      min-height: calc(100vh - 24px);
       background: var(--panel);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
     }
     h1 {
       margin: 0 0 8px 0;
@@ -97,8 +103,8 @@
       box-shadow: 0 10px 30px rgba(34,211,238,0.35);
       border-color: transparent;
     }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .tab-panel { display: none; height: 100%; }
+    .tab-panel.active { display: block; height: 100%; }
     .picker { display: flex; align-items: stretch; gap: 0; position: relative; }
     .picker input { border-radius: 10px 0 0 10px; border-right: 0; }
     .picker-buttons { display: flex; position: relative; }
@@ -334,7 +340,9 @@
       display: grid;
       grid-template-columns: 360px 1fr;
       gap: 16px;
-      align-items: start;
+      align-items: stretch;
+      height: 100%;
+      min-height: 0;
     }
     @media (max-width: 980px) {
       .exif-grid { grid-template-columns: 1fr; }
@@ -344,10 +352,15 @@
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 12px;
       padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
     }
     .file-list {
       margin-top: 8px;
-      max-height: 520px;
+      flex: 1;
+      min-height: 0;
       overflow: auto;
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 12px;
@@ -372,7 +385,7 @@
     .file-icon { width: 20px; text-align: center; opacity: 0.85; }
     .file-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .file-row.dir .file-icon { color: var(--accent); }
-    .exif-right { display: flex; flex-direction: column; gap: 10px; }
+    .exif-right { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
     .exif-header { display:flex; align-items:center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
     .exif-path { font-weight: 700; word-break: break-all; }
     .exif-details-card {
@@ -381,6 +394,9 @@
       background: rgba(255,255,255,0.02);
       padding: 14px;
       min-height: 320px;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
     }
     .exif-group { margin-bottom: 12px; }
     .exif-group:last-child { margin-bottom: 0; }
