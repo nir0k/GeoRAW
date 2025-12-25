@@ -644,7 +644,7 @@
           </div>
           <div class="row" style="margin-top:6px;">
             <div>
-              <input id="exifSearch" type="text" placeholder="Search..." aria-label="Search">
+              <input id="exifSearch" type="text" placeholder="Search files..." aria-label="Search files">
             </div>
           </div>
           <div id="exifTreeNotice" class="exif-hint muted"></div>
@@ -652,6 +652,11 @@
           <div class="exif-hint">Double-click a folder to open it. Nested folders are listed inline.</div>
         </div>
         <div class="exif-right">
+          <div class="row" style="margin-bottom:6px;">
+            <div>
+              <input id="exifMetaSearch" type="text" placeholder="Search metadata..." aria-label="Search metadata">
+            </div>
+          </div>
           <div class="exif-header">
             <div class="exif-path" id="exifSelectedPath">Select a file to inspect EXIF</div>
             <span id="exifTruncated" class="pill small" style="display:none;">Limited list</span>
@@ -786,8 +791,10 @@
       truncated: false,
       includeXmp: true,
       lastDetails: null,
+      metaQuery: "",
     };
     let exifFilterTimer = null;
+    let exifMetaTimer = null;
 
     function setRunning(context, running) {
       isRunning = running;
@@ -889,6 +896,18 @@
           }
         });
       }
+      const metaSearch = document.getElementById('exifMetaSearch');
+      if (metaSearch) {
+        metaSearch.addEventListener('input', () => {
+          if (exifMetaTimer) clearTimeout(exifMetaTimer);
+          exifMetaTimer = setTimeout(() => {
+            exifState.metaQuery = metaSearch.value.trim();
+            if (exifState.lastDetails) {
+              renderExifDetails(exifState.lastDetails);
+            }
+          }, 120);
+        });
+      }
     }
 
     function ensureExifLoaded() {
@@ -958,11 +977,6 @@
       const query = search ? search.value.trim() : "";
       exifState.filtered = filterFileTree(exifState.tree, query);
       if (renderList) drawExifList(exifState.filtered);
-      if (exifState.lastDetails) {
-        const detailQuery = query;
-        const filteredFields = filterExifDetails(exifState.lastDetails, detailQuery);
-        renderExifDetails(filteredFields);
-      }
     }
 
     function filterFileTree(nodes, query) {
@@ -1000,8 +1014,9 @@
     function filterExifDetails(details, query) {
       if (!details || !Array.isArray(details.fields)) return details;
       if (!query) return details;
-      const matcher = makeWildcardMatcher(query);
-      const filtered = details.fields.filter(f => matcher(f.label) || matcher(f.value));
+      const text = query.toLowerCase();
+      const contains = (val) => (val || "").toString().toLowerCase().includes(text);
+      const filtered = details.fields.filter(f => contains(f.label) || contains(f.value));
       return { ...details, fields: filtered };
     }
 
@@ -1132,6 +1147,9 @@
       try {
         const res = await getBackend().ReadExif(path, !!exifState.includeXmp);
         exifState.lastDetails = res;
+        exifState.metaQuery = "";
+        const metaInput = document.getElementById('exifMetaSearch');
+        if (metaInput) metaInput.value = "";
         renderExifDetails(res);
       } catch (e) {
         setStatus('exif', e.message || String(e), true);
@@ -1143,6 +1161,12 @@
       const container = document.getElementById('exifDetails');
       if (!container) return;
       container.innerHTML = "";
+      if (exifState.metaQuery) {
+        const filtered = filterExifDetails(data, exifState.metaQuery);
+        if (filtered && Array.isArray(filtered.fields)) {
+          data = filtered;
+        }
+      }
       const fields = data && Array.isArray(data.fields) ? data.fields : [];
       if (!fields.length) {
         setExifDetailsPlaceholder("No EXIF data found for this file.");
