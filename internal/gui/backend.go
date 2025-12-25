@@ -220,6 +220,8 @@ func (b *Backend) Process(req ProcessRequest) (*app.Summary, error) {
 	b.cancel = cancel
 	b.mu.Unlock()
 
+	progress := newProgressEmitter(ctx, "gps")
+
 	defer func() {
 		b.mu.Lock()
 		if b.cancel != nil {
@@ -251,6 +253,9 @@ func (b *Backend) Process(req ProcessRequest) (*app.Summary, error) {
 		AutoOffset:   req.AutoOffset,
 		Overwrite:    req.Overwrite,
 		PrintSummary: false,
+		Progress: func(done, total int) {
+			progress.update(done, total)
+		},
 	}
 
 	return app.RunWithLogger(runCtx, opts, buf)
@@ -272,6 +277,8 @@ func (b *Backend) ProcessSeries(req SeriesRequest) (*app.Summary, error) {
 	b.running = true
 	b.cancel = cancel
 	b.mu.Unlock()
+
+	progress := newProgressEmitter(ctx, "series")
 
 	defer func() {
 		b.mu.Lock()
@@ -306,6 +313,9 @@ func (b *Backend) ProcessSeries(req SeriesRequest) (*app.Summary, error) {
 		HDRTag:       req.HDRTag,
 		FocusTag:     req.FocusTag,
 		PrintSummary: false,
+		Progress: func(done, total int) {
+			progress.update(done, total)
+		},
 	}
 
 	return series.RunWithLogger(runCtx, opts, buf)

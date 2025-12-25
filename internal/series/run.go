@@ -27,9 +27,22 @@ const (
 )
 
 type seriesJob struct {
-	Path string
-	Meta media.SeriesMetadata
-	Seq  int
+	Path      string
+	Meta      media.SeriesMetadata
+	Seq       int
+	ForceType *Mode
+}
+
+type hdrHint struct {
+	Path  string
+	Meta  media.SeriesMetadata
+	Seq   int
+	IsRaw bool
+}
+
+type seriesGroup struct {
+	Jobs       []seriesJob
+	ForcedType *Mode
 }
 
 // Run is the main entry point for series detection/tagging.
@@ -85,6 +98,26 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 		return nil, fmt.Errorf("no files found to process")
 	}
 
+	total := 0
+	for _, path := range files {
+		ext := strings.ToLower(filepath.Ext(path))
+		if ext == ".xmp" {
+			continue
+		}
+		if isHDRMergedCandidate(ext) {
+			continue
+		}
+		total++
+	}
+	completed := 0
+	reportProgress := func(done int) {
+		if opts.Progress == nil || total == 0 {
+			return
+		}
+		opts.Progress(done, total)
+	}
+	reportProgress(0)
+
 	var (
 		results   []app.FileResult
 		processed int
@@ -92,6 +125,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 		unchanged int
 		failed    int
 		metaError int
+		hints     []hdrHint
 	)
 
 	jobs := make([]seriesJob, 0, len(files))
@@ -106,10 +140,29 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 		if ext == ".xmp" {
 			continue
 		}
+		if isHDRMergedCandidate(ext) {
+			meta, err := media.ReadSeriesMetadata(path)
+			if err != nil {
+				warnf("Failed to read metadata for %s: %v", path, err)
+				continue
+			}
+			if !isCanon(meta.CameraMake) {
+				continue
+			}
+			hints = append(hints, hdrHint{
+				Path:  path,
+				Meta:  meta,
+				Seq:   parseSequence(path),
+				IsRaw: false,
+			})
+			continue
+		}
 		if !media.SupportedRaw(path) {
 			warnf("Skipping non-RAW file: %s", path)
 			skipped++
 			results = append(results, app.FileResult{Path: path, Status: "skipped", Message: "Not a RAW file"})
+			completed++
+			reportProgress(completed)
 			continue
 		}
 
@@ -122,6 +175,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 				Status:  "meta_error",
 				Message: err.Error(),
 			})
+			completed++
+			reportProgress(completed)
 			continue
 		}
 
@@ -133,6 +188,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 				Status:  "skipped",
 				Message: "Not a Canon RAW",
 			})
+			completed++
+			reportProgress(completed)
 			continue
 		}
 
@@ -157,7 +214,17 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 		return jobs[i].Meta.CaptureTime.Before(jobs[j].Meta.CaptureTime)
 	})
 
-	groups := buildGroups(jobs)
+	hdrGroups, assigned := detectHDRGroups(hints, jobs, warnf)
+
+	autoJobs := make([]seriesJob, 0, len(jobs))
+	for _, job := range jobs {
+		if _, ok := assigned[job.Path]; ok {
+			continue
+		}
+		autoJobs = append(autoJobs, job)
+	}
+
+	groups := append(hdrGroups, buildGroups(autoJobs)...)
 	if len(groups) == 0 {
 		return nil, fmt.Errorf("no candidate series found")
 	}
@@ -169,19 +236,27 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 			return nil, ctx.Err()
 		default:
 		}
-		if len(group) < minSeriesLen {
-			for _, job := range group {
+		if len(group.Jobs) < minSeriesLen {
+			for _, job := range group.Jobs {
 				skipped++
 				results = append(results, app.FileResult{
 					Path:    job.Path,
 					Status:  "skipped",
 					Message: "Series too short",
 				})
+				completed++
+				reportProgress(completed)
 			}
 			continue
 		}
 
-		seriesType := resolveType(group, opts)
+		var seriesType Mode
+		allowHDR := group.ForcedType != nil
+		if group.ForcedType != nil {
+			seriesType = *group.ForcedType
+		} else {
+			seriesType = resolveType(group.Jobs, opts, allowHDR)
+		}
 		typeTag := opts.HDRTag
 		if seriesType == ModeFocus {
 			typeTag = opts.FocusTag
@@ -189,7 +264,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 		seriesID := fmt.Sprintf("%s_%05d", opts.Prefix, seriesIdx)
 		seriesIdx++
 
-		for _, job := range group {
+		for _, job := range group.Jobs {
 			tags := []string{typeTag, seriesID}
 			sidecar := xmp.SidecarPath(job.Path)
 
@@ -202,6 +277,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 					Status:  "unchanged",
 					Message: "Series tags already present",
 				})
+				completed++
+				reportProgress(completed)
 				continue
 			}
 			if err != nil {
@@ -212,6 +289,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 					Status:  "failed",
 					Message: err.Error(),
 				})
+				completed++
+				reportProgress(completed)
 				continue
 			}
 
@@ -231,6 +310,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 					Message: "Sidecar unchanged",
 				})
 			}
+			completed++
+			reportProgress(completed)
 		}
 	}
 
@@ -254,11 +335,11 @@ func isCanon(makeStr string) bool {
 	return strings.Contains(strings.ToLower(makeStr), "canon")
 }
 
-func buildGroups(jobs []seriesJob) [][]seriesJob {
+func buildGroups(jobs []seriesJob) []seriesGroup {
 	if len(jobs) == 0 {
 		return nil
 	}
-	var groups [][]seriesJob
+	var groups []seriesGroup
 	current := []seriesJob{jobs[0]}
 
 	for i := 1; i < len(jobs); i++ {
@@ -268,11 +349,143 @@ func buildGroups(jobs []seriesJob) [][]seriesJob {
 			current = append(current, next)
 			continue
 		}
-		groups = append(groups, current)
+		groups = append(groups, seriesGroup{Jobs: current})
 		current = []seriesJob{next}
 	}
-	groups = append(groups, current)
+	groups = append(groups, seriesGroup{Jobs: current})
 	return groups
+}
+
+func detectHDRGroups(hints []hdrHint, jobs []seriesJob, warnf func(string, ...interface{})) ([]seriesGroup, map[string]struct{}) {
+	if len(hints) == 0 || len(jobs) == 0 {
+		return nil, nil
+	}
+	sort.Slice(hints, func(i, j int) bool {
+		return hints[i].Seq < hints[j].Seq
+	})
+
+	jobBySeq := make(map[int]seriesJob, len(jobs))
+	for _, job := range jobs {
+		jobBySeq[job.Seq] = job
+	}
+
+	assigned := make(map[string]struct{})
+	var groups []seriesGroup
+
+	for _, hint := range hints {
+		if hint.Seq <= 0 {
+			continue
+		}
+		if hint.IsRaw {
+			continue
+		}
+
+		seqs := []int{hint.Seq - 3, hint.Seq - 2, hint.Seq - 1}
+		j1, ok1 := jobBySeq[seqs[0]]
+		j2, ok2 := jobBySeq[seqs[1]]
+		j3, ok3 := jobBySeq[seqs[2]]
+		if !(ok1 && ok2 && ok3) {
+			continue
+		}
+		if j1.Seq+1 != j2.Seq || j2.Seq+1 != j3.Seq {
+			continue
+		}
+		if _, used := assigned[j1.Path]; used {
+			continue
+		}
+		if _, used := assigned[j2.Path]; used {
+			continue
+		}
+		if _, used := assigned[j3.Path]; used {
+			continue
+		}
+
+		if !validateHDRTiming(j1, j2, j3, hint) {
+			continue
+		}
+
+		for _, p := range []string{j1.Path, j2.Path, j3.Path} {
+			assigned[p] = struct{}{}
+		}
+		forced := ModeHDR
+		groups = append(groups, seriesGroup{
+			Jobs:       []seriesJob{j1, j2, j3},
+			ForcedType: &forced,
+		})
+	}
+
+	return groups, assigned
+}
+
+func validateHDRTiming(j1, j2, j3 seriesJob, hint hdrHint) bool {
+	t1 := j1.Meta.CaptureTime
+	t2 := j2.Meta.CaptureTime
+	t3 := j3.Meta.CaptureTime
+	th := hint.Meta.CaptureTime
+
+	// HIF/JPEG time must match first frame within small tolerance.
+	if !withinTolerance(t1, th, 200*time.Millisecond) {
+		return false
+	}
+
+	// t2 ~= t1 + shutter1
+	if !withinTolerance(t1.Add(durationFromExposure(j1.Meta.ExposureTime)), t2, sumTolerance(j1.Meta.ExposureTime)) {
+		return false
+	}
+	// t3 ~= t2 + shutter2
+	if !withinTolerance(t2.Add(durationFromExposure(j2.Meta.ExposureTime)), t3, sumTolerance(j2.Meta.ExposureTime)) {
+		return false
+	}
+
+	return true
+}
+
+func validateHDRTimingRawAnchor(j1, j2, j3 seriesJob) bool {
+	t1 := j1.Meta.CaptureTime
+	t2 := j2.Meta.CaptureTime
+	t3 := j3.Meta.CaptureTime
+
+	if !withinTolerance(t1.Add(durationFromExposure(j1.Meta.ExposureTime)), t2, sumTolerance(j1.Meta.ExposureTime)) {
+		return false
+	}
+	if !withinTolerance(t2.Add(durationFromExposure(j2.Meta.ExposureTime)), t3, sumTolerance(j2.Meta.ExposureTime)) {
+		return false
+	}
+	return true
+}
+
+func increasingTime(a, b time.Time) bool {
+	return !b.Before(a)
+}
+
+func withinTolerance(a, b time.Time, tol time.Duration) bool {
+	gap := b.Sub(a)
+	if gap < 0 {
+		gap = -gap
+	}
+	return gap <= tol
+}
+
+func sumTolerance(exp float64) time.Duration {
+	base := durationFromExposure(exp)
+	// 50ms + 1% выдержки
+	return 50*time.Millisecond + time.Duration(0.01*float64(base))
+}
+
+func durationFromExposure(exp float64) time.Duration {
+	if exp <= 0 {
+		return 0
+	}
+	return time.Duration(exp * float64(time.Second))
+}
+
+func isHDRMergedCandidate(ext string) bool {
+	switch strings.ToLower(ext) {
+	case ".jpg", ".jpeg", ".hif":
+		return true
+	default:
+		return false
+	}
 }
 
 func sameSeries(prev, next seriesJob) bool {
@@ -290,15 +503,19 @@ func sameSeries(prev, next seriesJob) bool {
 	return gap >= 0 && gap <= allowed
 }
 
-func resolveType(group []seriesJob, opts Options) Mode {
-	if opts.Mode == ModeHDR || opts.Mode == ModeFocus {
-		return opts.Mode
-	}
-
+func resolveType(group []seriesJob, opts Options, allowHDR bool) Mode {
 	for _, job := range group {
 		if job.Meta.FocusBr {
 			return ModeFocus
 		}
+	}
+
+	if !allowHDR {
+		return ModeFocus
+	}
+
+	if opts.Mode == ModeHDR || opts.Mode == ModeFocus {
+		return opts.Mode
 	}
 
 	evValues := make([]float64, 0, len(group))

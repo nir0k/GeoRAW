@@ -13,6 +13,7 @@ import (
 	"github.com/evanoberholster/imagemeta/exif2"
 	"github.com/evanoberholster/imagemeta/exif2/ifds"
 	"github.com/evanoberholster/imagemeta/exif2/ifds/exififd"
+	"github.com/evanoberholster/imagemeta/exif2/ifds/mknote/canon"
 	"github.com/evanoberholster/imagemeta/exif2/tag"
 	"github.com/evanoberholster/imagemeta/imagetype"
 	"github.com/evanoberholster/imagemeta/isobmff"
@@ -36,6 +37,7 @@ type SeriesMetadata struct {
 	FNumber      float64 // aperture value (f/x)
 	ISO          uint32
 	FocusBr      bool // true when Canon maker note indicates focus bracketing
+	HDRHint      bool // true when maker note indicates HDR=On (for JPEG/HIF merged output)
 }
 
 // SupportedRaw reports whether the provided path has a supported RAW extension.
@@ -120,6 +122,7 @@ func ReadSeriesMetadata(path string) (SeriesMetadata, error) {
 		FNumber:      meta.fNumber,
 		ISO:          meta.iso,
 		FocusBr:      meta.focusBr,
+		HDRHint:      meta.hdr,
 	}, nil
 }
 
@@ -134,6 +137,7 @@ type seriesExif struct {
 	fNumber      float64
 	iso          uint32
 	focusBr      bool
+	hdr          bool
 }
 
 func decodeSeriesExifSafe(r io.ReadSeeker, path string) (se seriesExif, err error) {
@@ -256,6 +260,20 @@ func makeSeriesTagParser(dst *seriesExif) exif2.TagParserFn {
 			if t.ID == tag.ID(0x0032) {
 				if p.ParseUint16(t) != 0 {
 					dst.focusBr = true
+				}
+			}
+			if t.ID == tag.ID(canon.CanonHDRInfo) {
+				val16 := p.ParseUint16(t)
+				val32 := p.ParseUint32(t)
+				if val16 != 0 || val32 != 0 {
+					dst.hdr = true
+				}
+			}
+		default:
+			// Some Canon HDR flags in JPEG live in a dedicated CanonHdr IFD (id 0x0001).
+			if t.ID == tag.ID(0x0001) {
+				if p.ParseUint32(t) != 0 {
+					dst.hdr = true
 				}
 			}
 		}

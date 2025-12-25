@@ -93,6 +93,22 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 		return nil, fmt.Errorf("no files found to process")
 	}
 
+	total := 0
+	for _, path := range files {
+		if strings.EqualFold(filepath.Ext(path), ".xmp") {
+			continue
+		}
+		total++
+	}
+	completed := 0
+	reportProgress := func(done int) {
+		if opts.Progress == nil || total == 0 {
+			return
+		}
+		opts.Progress(done, total)
+	}
+	reportProgress(0)
+
 	var (
 		processed int
 		skipped   int
@@ -124,6 +140,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Path:   path,
 				Status: "skipped",
 			})
+			completed++
+			reportProgress(completed)
 			continue
 		}
 
@@ -136,6 +154,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Status:  "meta_error",
 				Message: err.Error(),
 			})
+			completed++
+			reportProgress(completed)
 			continue
 		}
 
@@ -180,6 +200,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 					Status:  "out_of_track",
 					Message: err.Error(),
 				})
+				completed++
+				reportProgress(completed)
 				continue
 			}
 			errorf("No matching GPX point for %s (%s): %v", job.Path, capture.Format(time.RFC3339), err)
@@ -189,6 +211,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Status:  "failed",
 				Message: err.Error(),
 			})
+			completed++
+			reportProgress(completed)
 			continue
 		}
 
@@ -202,6 +226,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Status:  "unchanged",
 				Message: "GPS already present",
 			})
+			completed++
+			reportProgress(completed)
 			continue
 		}
 		if err != nil {
@@ -212,6 +238,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Status:  "failed",
 				Message: err.Error(),
 			})
+			completed++
+			reportProgress(completed)
 			continue
 		}
 
@@ -240,6 +268,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Message: "Sidecar existed",
 			})
 		}
+		completed++
+		reportProgress(completed)
 	}
 
 	sum := &Summary{
