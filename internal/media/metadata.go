@@ -36,7 +36,6 @@ type SeriesMetadata struct {
 	ExposureTime float64 // seconds
 	FNumber      float64 // aperture value (f/x)
 	ISO          uint32
-	FocusBr      bool // true when Canon maker note indicates focus bracketing
 	HDRHint      bool // true when maker note indicates HDR=On (for JPEG/HIF merged output)
 }
 
@@ -121,7 +120,6 @@ func ReadSeriesMetadata(path string) (SeriesMetadata, error) {
 		ExposureTime: meta.exposureTime,
 		FNumber:      meta.fNumber,
 		ISO:          meta.iso,
-		FocusBr:      meta.focusBr,
 		HDRHint:      meta.hdr,
 	}, nil
 }
@@ -136,7 +134,6 @@ type seriesExif struct {
 	exposureTime float64
 	fNumber      float64
 	iso          uint32
-	focusBr      bool
 	hdr          bool
 }
 
@@ -257,11 +254,6 @@ func makeSeriesTagParser(dst *seriesExif) exif2.TagParserFn {
 				dst.iso = p.ParseUint32(t)
 			}
 		case ifds.MknoteIFD, ifds.MkNoteCanonIFD:
-			if t.ID == tag.ID(0x0032) {
-				if p.ParseUint16(t) != 0 {
-					dst.focusBr = true
-				}
-			}
 			if t.ID == tag.ID(canon.CanonHDRInfo) {
 				val16 := p.ParseUint16(t)
 				val32 := p.ParseUint32(t)

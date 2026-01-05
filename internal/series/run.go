@@ -87,8 +87,8 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 	warnf := logInstance.Warningf
 	errorf := logInstance.Errorf
 
-	infof("Starting series tagging with input=%s recursive=%t mode=%s overwrite=%t prefix=%s start=%d hdrTag=%s focusTag=%s",
-		opts.InputPath, opts.Recursive, opts.Mode, opts.Overwrite, opts.Prefix, opts.StartIndex, opts.HDRTag, opts.FocusTag)
+	infof("Starting series tagging with input=%s recursive=%t mode=%s overwrite=%t prefix=%s start=%d hdrTag=%s",
+		opts.InputPath, opts.Recursive, opts.Mode, opts.Overwrite, opts.Prefix, opts.StartIndex, opts.HDRTag)
 
 	files, err := media.CollectFiles(opts.InputPath, opts.Recursive)
 	if err != nil {
@@ -250,16 +250,19 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 			continue
 		}
 
-		var seriesType Mode
-		allowHDR := group.ForcedType != nil
-		if group.ForcedType != nil {
-			seriesType = *group.ForcedType
-		} else {
-			seriesType = resolveType(group.Jobs, opts, allowHDR)
-		}
 		typeTag := opts.HDRTag
-		if seriesType == ModeFocus {
-			typeTag = opts.FocusTag
+		if group.ForcedType == nil && !shouldTagHDR(group.Jobs, opts) {
+			for _, job := range group.Jobs {
+				skipped++
+				results = append(results, app.FileResult{
+					Path:    job.Path,
+					Status:  "skipped",
+					Message: "Not detected as HDR",
+				})
+				completed++
+				reportProgress(completed)
+			}
+			continue
 		}
 		seriesID := fmt.Sprintf("%s_%05d", opts.Prefix, seriesIdx)
 		seriesIdx++
@@ -503,19 +506,18 @@ func sameSeries(prev, next seriesJob) bool {
 	return gap >= 0 && gap <= allowed
 }
 
-func resolveType(group []seriesJob, opts Options, allowHDR bool) Mode {
+func shouldTagHDR(group []seriesJob, opts Options) bool {
+	if len(group) == 0 {
+		return false
+	}
+	if opts.Mode == ModeHDR {
+		return true
+	}
+
 	for _, job := range group {
-		if job.Meta.FocusBr {
-			return ModeFocus
+		if job.Meta.HDRHint {
+			return true
 		}
-	}
-
-	if !allowHDR {
-		return ModeFocus
-	}
-
-	if opts.Mode == ModeHDR || opts.Mode == ModeFocus {
-		return opts.Mode
 	}
 
 	evValues := make([]float64, 0, len(group))
@@ -527,14 +529,11 @@ func resolveType(group []seriesJob, opts Options, allowHDR bool) Mode {
 	}
 
 	if len(evValues) == 0 {
-		return ModeHDR
+		return false
 	}
 	sort.Float64s(evValues)
 	rangeEv := evValues[len(evValues)-1] - evValues[0]
-	if rangeEv >= evHDRThreshold {
-		return ModeHDR
-	}
-	return ModeFocus
+	return rangeEv >= evHDRThreshold
 }
 
 func ev(meta media.SeriesMetadata) float64 {

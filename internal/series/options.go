@@ -13,9 +13,8 @@ import (
 type Mode string
 
 const (
-	ModeAuto  Mode = "auto"
-	ModeHDR   Mode = "hdr"
-	ModeFocus Mode = "focus"
+	ModeAuto Mode = "auto"
+	ModeHDR  Mode = "hdr"
 )
 
 // Options represents user-provided parameters for series tagging.
@@ -29,7 +28,6 @@ type Options struct {
 	Prefix       string
 	StartIndex   int
 	HDRTag       string
-	FocusTag     string
 	PrintSummary bool
 	Progress     func(done, total int)
 }
@@ -41,7 +39,6 @@ func (o *Options) Validate() error {
 	o.LogFile = strings.TrimSpace(o.LogFile)
 	o.Prefix = strings.TrimSpace(o.Prefix)
 	o.HDRTag = strings.TrimSpace(o.HDRTag)
-	o.FocusTag = strings.TrimSpace(o.FocusTag)
 
 	if o.InputPath == "" {
 		return fmt.Errorf("input path is required")
@@ -61,9 +58,9 @@ func (o *Options) Validate() error {
 		o.Mode = ModeAuto
 	}
 	switch o.Mode {
-	case ModeAuto, ModeHDR, ModeFocus:
+	case ModeAuto, ModeHDR:
 	default:
-		return fmt.Errorf("invalid mode %q (expected auto, hdr, or focus)", o.Mode)
+		return fmt.Errorf("invalid mode %q (expected auto or hdr)", o.Mode)
 	}
 
 	if o.Prefix == "" {
@@ -81,9 +78,6 @@ func (o *Options) Validate() error {
 	}
 	if o.HDRTag == "" {
 		o.HDRTag = "hdr_mode"
-	}
-	if o.FocusTag == "" {
-		o.FocusTag = "focus_br"
 	}
 
 	return nil

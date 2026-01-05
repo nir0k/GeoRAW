@@ -438,7 +438,7 @@
       <span id="versionTag" class="pill" style="display:none;"></span>
     </div>
     <div class="subtitle">
-      <span>Geotag RAW photos with GPX or tag Canon HDR/Focus series into XMP sidecars.</span>
+      <span>Geotag RAW photos with GPX or tag Canon HDR series into XMP sidecars.</span>
     </div>
 
     <div class="tabs">
@@ -559,9 +559,8 @@
           <div>
             <label>Detection mode</label>
             <select id="modeSeries">
-              <option value="auto">Auto (HDR/Focus)</option>
+              <option value="auto">Auto (HDR detection)</option>
               <option value="hdr">Force HDR</option>
-              <option value="focus">Force Focus</option>
             </select>
           </div>
         </div>
@@ -586,10 +585,6 @@
           <div>
             <label>HDR tag name</label>
             <input id="hdrTagSeries" type="text" value="hdr_mode">
-          </div>
-          <div>
-            <label>Focus bracketing tag name</label>
-            <input id="focusTagSeries" type="text" value="focus_br">
           </div>
         </div>
 
@@ -1263,7 +1258,6 @@
         prefix: document.getElementById('prefixSeries').value,
         startIndex,
         hdrTag: document.getElementById('hdrTagSeries').value,
-        focusTag: document.getElementById('focusTagSeries').value,
       };
       try {
         const res = await getBackend().ProcessSeries(req);
@@ -1348,7 +1342,6 @@
       };
       const tagColors = {
         hdr_mode: { bg: "#38bdf8", fg: "#0f172a" },
-        focus_br: { bg: "#f59e0b", fg: "#0f172a" },
       };
 
       const renderTagBadge = (tagType) => {
