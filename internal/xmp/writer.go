@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,17 +19,12 @@ import (
 // ErrGPSAlreadyPresent is returned when GPS tags already exist and overwriting is disabled.
 var ErrGPSAlreadyPresent = errors.New("gps already present in sidecar")
 
+const exifNamespace = "http://ns.adobe.com/exif/1.0/"
+
 // BuildSidecar returns XMP payload with GPS information.
 func BuildSidecar(coord gpx.Coordinate, ts time.Time) []byte {
-	latRef := "N"
-	if coord.Latitude < 0 {
-		latRef = "S"
-	}
-
-	lonRef := "E"
-	if coord.Longitude < 0 {
-		lonRef = "W"
-	}
+	latVal, latRef := formatGPSCoordinate(coord.Latitude, "N", "S")
+	lonVal, lonRef := formatGPSCoordinate(coord.Longitude, "E", "W")
 
 	var (
 		altRef int
@@ -51,24 +47,52 @@ func BuildSidecar(coord gpx.Coordinate, ts time.Time) []byte {
 	builder.WriteString(`<?xpacket begin=" " id="W5M0MpCehiHzreSzNTczkc9d"?>`)
 	builder.WriteString("\n<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"GeoRAW\">\n")
 	builder.WriteString("  <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n")
-	builder.WriteString("    <rdf:Description rdf:about=\"\" xmlns:exif=\"http://ns.adobe.com/exif/1.0/\">\n")
-	builder.WriteString(fmt.Sprintf("      <exif:GPSLatitude>%.8f</exif:GPSLatitude>\n", coord.Latitude))
-	builder.WriteString(fmt.Sprintf("      <exif:GPSLatitudeRef>%s</exif:GPSLatitudeRef>\n", latRef))
-	builder.WriteString(fmt.Sprintf("      <exif:GPSLongitude>%.8f</exif:GPSLongitude>\n", coord.Longitude))
-	builder.WriteString(fmt.Sprintf("      <exif:GPSLongitudeRef>%s</exif:GPSLongitudeRef>\n", lonRef))
+	builder.WriteString(fmt.Sprintf("    <rdf:Description rdf:about=\"\" xmlns:exif=\"%s\"", exifNamespace))
+	builder.WriteString(fmt.Sprintf(" exif:GPSLatitude=\"%s\"", latVal))
+	builder.WriteString(fmt.Sprintf(" exif:GPSLatitudeRef=\"%s\"", latRef))
+	builder.WriteString(fmt.Sprintf(" exif:GPSLongitude=\"%s\"", lonVal))
+	builder.WriteString(fmt.Sprintf(" exif:GPSLongitudeRef=\"%s\"", lonRef))
 	if hasAlt {
-		builder.WriteString(fmt.Sprintf("      <exif:GPSAltitude>%0.2f</exif:GPSAltitude>\n", altVal))
-		builder.WriteString(fmt.Sprintf("      <exif:GPSAltitudeRef>%d</exif:GPSAltitudeRef>\n", altRef))
+		builder.WriteString(fmt.Sprintf(" exif:GPSAltitude=\"%0.2f\"", altVal))
+		builder.WriteString(fmt.Sprintf(" exif:GPSAltitudeRef=\"%d\"", altRef))
 	}
-	builder.WriteString("      <exif:GPSVersionID>2.3.0.0</exif:GPSVersionID>\n")
-	builder.WriteString(fmt.Sprintf("      <exif:GPSDateStamp>%s</exif:GPSDateStamp>\n", gpsDate))
-	builder.WriteString(fmt.Sprintf("      <exif:GPSTimeStamp>%s</exif:GPSTimeStamp>\n", gpsTime))
+	builder.WriteString(" exif:GPSVersionID=\"2.3.0.0\"")
+	builder.WriteString(fmt.Sprintf(" exif:GPSDateStamp=\"%s\"", gpsDate))
+	builder.WriteString(fmt.Sprintf(" exif:GPSTimeStamp=\"%s\"", gpsTime))
+	builder.WriteString(">\n")
 	builder.WriteString("    </rdf:Description>\n")
 	builder.WriteString("  </rdf:RDF>\n")
 	builder.WriteString("</x:xmpmeta>\n")
 	builder.WriteString("<?xpacket end=\"w\"?>")
 
 	return []byte(builder.String())
+}
+
+func formatGPSCoordinate(value float64, positiveRef, negativeRef string) (string, string) {
+	ref := positiveRef
+	if value < 0 {
+		ref = negativeRef
+	}
+
+	abs := math.Abs(value)
+	deg := math.Floor(abs)
+	minutes := (abs - deg) * 60
+
+	minutes = math.Round(minutes*1e10) / 1e10
+	if minutes >= 60 {
+		deg++
+		minutes = 0
+	}
+
+	degStr := strconv.FormatFloat(deg, 'f', 0, 64)
+	minStr := strconv.FormatFloat(minutes, 'f', 10, 64)
+	minStr = strings.TrimRight(minStr, "0")
+	minStr = strings.TrimRight(minStr, ".")
+	if minStr == "" {
+		minStr = "0"
+	}
+
+	return fmt.Sprintf("%s,%s%s", degStr, minStr, ref), ref
 }
 
 // SidecarPath returns the expected XMP filename for a RAW file.
@@ -116,50 +140,39 @@ func mergeSidecar(existing []byte, coord gpx.Coordinate, ts time.Time) ([]byte, 
 	if len(bytes.TrimSpace(existing)) == 0 {
 		return BuildSidecar(coord, ts), nil
 	}
-
-	doc, err := parseXMP(existing)
+	merged, err := mergeGPSInPlace(existing, coord, ts)
 	if err != nil {
-		return nil, fmt.Errorf("parse existing xmp: %w", err)
+		return nil, err
 	}
-
-	descIdx := selectDescription(doc.RDF.Descriptions)
-	if descIdx == -1 {
-		descIdx = 0
-		doc.RDF.Descriptions = append(doc.RDF.Descriptions, rdfDescription{})
-	}
-
-	desc := doc.RDF.Descriptions[descIdx]
-	desc.Attrs = ensureExifNamespace(desc.Attrs)
-	desc.Inner = mergeGPSInner(desc.Inner, coord, ts)
-	doc.RDF.Descriptions[descIdx] = desc
-
-	out, err := marshalXMP(doc)
-	if err != nil {
-		return nil, fmt.Errorf("marshal merged xmp: %w", err)
-	}
-	return out, nil
+	return merged, nil
 }
 
-func mergeGPSInner(inner string, coord gpx.Coordinate, ts time.Time) string {
-	inner = stripGPSTags(inner)
-	gpsBlock := buildGPSBlock(coord, ts)
+var descriptionTagRegex = regexp.MustCompile(`(?is)<rdf:Description\b[^>]*>`)
+var gpsAttrRegex = regexp.MustCompile(`(?is)\s+exif:GPS(?:Latitude|LatitudeRef|Longitude|LongitudeRef|Altitude|AltitudeRef|VersionID|DateStamp|TimeStamp)\s*=\s*("[^"]*"|'[^']*')`)
+var exifNamespaceRegex = regexp.MustCompile(`(?is)\bxmlns:exif\s*=\s*("[^"]*"|'[^']*')`)
 
-	inner = strings.TrimSpace(inner)
-	if inner == "" {
-		return gpsBlock
+func mergeGPSInPlace(existing []byte, coord gpx.Coordinate, ts time.Time) ([]byte, error) {
+	text := string(existing)
+	loc := descriptionTagRegex.FindStringIndex(text)
+	if loc == nil {
+		return nil, fmt.Errorf("rdf:Description tag not found")
 	}
-	return inner + "\n" + gpsBlock
+
+	tag := text[loc[0]:loc[1]]
+	updatedTag, err := updateDescriptionTag(tag, coord, ts)
+	if err != nil {
+		return nil, err
+	}
+
+	updated := text[:loc[0]] + updatedTag + text[loc[1]:]
+	updated = stripGPSTagsFromXMP(updated)
+
+	return []byte(updated), nil
 }
 
-func buildGPSBlock(coord gpx.Coordinate, ts time.Time) string {
-	latRef := "N"
-	if coord.Latitude < 0 {
-		latRef = "S"
-	}
-	lonRef := "E"
-	if coord.Longitude < 0 {
-		lonRef = "W"
-	}
+func updateDescriptionTag(tag string, coord gpx.Coordinate, ts time.Time) (string, error) {
+	latVal, latRef := formatGPSCoordinate(coord.Latitude, "N", "S")
+	lonVal, lonRef := formatGPSCoordinate(coord.Longitude, "E", "W")
 
 	var (
 		altRef int
@@ -178,37 +191,105 @@ func buildGPSBlock(coord gpx.Coordinate, ts time.Time) string {
 	gpsDate := ts.UTC().Format("2006:01:02")
 	gpsTime := ts.UTC().Format("15:04:05")
 
-	var b strings.Builder
-	b.WriteString(fmt.Sprintf("<exif:GPSLatitude>%.8f</exif:GPSLatitude>\n", coord.Latitude))
-	b.WriteString(fmt.Sprintf("<exif:GPSLatitudeRef>%s</exif:GPSLatitudeRef>\n", latRef))
-	b.WriteString(fmt.Sprintf("<exif:GPSLongitude>%.8f</exif:GPSLongitude>\n", coord.Longitude))
-	b.WriteString(fmt.Sprintf("<exif:GPSLongitudeRef>%s</exif:GPSLongitudeRef>\n", lonRef))
-	if hasAlt {
-		b.WriteString(fmt.Sprintf("<exif:GPSAltitude>%0.2f</exif:GPSAltitude>\n", altVal))
-		b.WriteString(fmt.Sprintf("<exif:GPSAltitudeRef>%d</exif:GPSAltitudeRef>\n", altRef))
-	}
-	b.WriteString("<exif:GPSVersionID>2.3.0.0</exif:GPSVersionID>\n")
-	b.WriteString(fmt.Sprintf("<exif:GPSDateStamp>%s</exif:GPSDateStamp>\n", gpsDate))
-	b.WriteString(fmt.Sprintf("<exif:GPSTimeStamp>%s</exif:GPSTimeStamp>", gpsTime))
+	clean := gpsAttrRegex.ReplaceAllString(tag, "")
 
-	return b.String()
+	attrs := make([]string, 0, 10)
+	if !exifNamespaceRegex.MatchString(clean) {
+		attrs = append(attrs, fmt.Sprintf(`xmlns:exif="%s"`, exifNamespace))
+	}
+	attrs = append(attrs,
+		fmt.Sprintf(`exif:GPSLatitude="%s"`, latVal),
+		fmt.Sprintf(`exif:GPSLatitudeRef="%s"`, latRef),
+		fmt.Sprintf(`exif:GPSLongitude="%s"`, lonVal),
+		fmt.Sprintf(`exif:GPSLongitudeRef="%s"`, lonRef),
+		`exif:GPSVersionID="2.3.0.0"`,
+		fmt.Sprintf(`exif:GPSDateStamp="%s"`, gpsDate),
+		fmt.Sprintf(`exif:GPSTimeStamp="%s"`, gpsTime),
+	)
+	if hasAlt {
+		attrs = append(attrs,
+			fmt.Sprintf(`exif:GPSAltitude="%0.2f"`, altVal),
+			fmt.Sprintf(`exif:GPSAltitudeRef="%d"`, altRef),
+		)
+	}
+
+	updated, err := insertTagAttributes(clean, attrs)
+	if err != nil {
+		return "", err
+	}
+	return updated, nil
 }
 
-func stripGPSTags(inner string) string {
-	for _, re := range gpsTagRegexes {
-		inner = re.ReplaceAllString(inner, "")
+func insertTagAttributes(tag string, attrs []string) (string, error) {
+	if len(attrs) == 0 {
+		return tag, nil
 	}
-	return strings.TrimSpace(inner)
+
+	closeIdx := strings.LastIndex(tag, ">")
+	if closeIdx == -1 {
+		return "", fmt.Errorf("invalid rdf:Description tag")
+	}
+
+	prefix := tag[:closeIdx]
+	suffix := tag[closeIdx:]
+	if strings.HasSuffix(prefix, "/") {
+		prefix = strings.TrimSuffix(prefix, "/")
+		suffix = "/>"
+	}
+
+	if strings.Contains(prefix, "\n") {
+		indent := guessAttributeIndent(prefix)
+		var b strings.Builder
+		b.WriteString(prefix)
+		for _, attr := range attrs {
+			b.WriteString("\n")
+			b.WriteString(indent)
+			b.WriteString(attr)
+		}
+		b.WriteString(suffix)
+		return b.String(), nil
+	}
+
+	return prefix + " " + strings.Join(attrs, " ") + suffix, nil
+}
+
+func guessAttributeIndent(prefix string) string {
+	lines := strings.Split(prefix, "\n")
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := lines[i]
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		for i, r := range line {
+			if r != ' ' && r != '\t' {
+				return line[:i]
+			}
+		}
+		return line
+	}
+	return "  "
+}
+
+func stripGPSTagsFromXMP(text string) string {
+	for _, re := range gpsTagRegexes {
+		text = re.ReplaceAllString(text, "")
+	}
+	return text
 }
 
 func hasGPSData(data []byte) bool {
 	text := strings.ToLower(string(data))
 	for _, tag := range []string{
 		"<exif:gpslatitude",
+		"exif:gpslatitude=",
 		"<exif:gpslongitude",
+		"exif:gpslongitude=",
 		"<exif:gpsaltitude",
+		"exif:gpsaltitude=",
 		"<exif:gpstimestamp",
+		"exif:gpstimestamp=",
 		"<exif:gpsdatestamp",
+		"exif:gpsdatestamp=",
 	} {
 		if strings.Contains(text, tag) {
 			return true
@@ -296,7 +377,7 @@ func selectDescription(descriptions []rdfDescription) int {
 		for _, attr := range d.Attrs {
 			if (attr.Name.Space == "xmlns" && attr.Name.Local == "exif") ||
 				attr.Name.Local == "xmlns:exif" ||
-				(attr.Name.Local == "exif" && strings.Contains(attr.Value, "ns.adobe.com/exif/1.0")) {
+				(attr.Name.Local == "exif" && strings.Contains(attr.Value, exifNamespace)) {
 				return i
 			}
 		}
@@ -306,7 +387,7 @@ func selectDescription(descriptions []rdfDescription) int {
 
 func ensureExifNamespace(attrs []xml.Attr) []xml.Attr {
 	for _, attr := range attrs {
-		if attr.Name.Local == "exif" && strings.Contains(attr.Value, "ns.adobe.com/exif/1.0") {
+		if attr.Name.Local == "exif" && strings.Contains(attr.Value, exifNamespace) {
 			return attrs
 		}
 		if attr.Name.Local == "xmlns:exif" || (attr.Name.Space == "xmlns" && attr.Name.Local == "exif") {
@@ -315,6 +396,6 @@ func ensureExifNamespace(attrs []xml.Attr) []xml.Attr {
 	}
 	return append(attrs, xml.Attr{
 		Name:  xml.Name{Space: "xmlns", Local: "exif"},
-		Value: "http://ns.adobe.com/exif/1.0/",
+		Value: exifNamespace,
 	})
 }
