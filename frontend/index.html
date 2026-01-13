@@ -567,9 +567,9 @@
 
         <div class="row">
           <div>
-            <label>Series prefix (random 6 chars by default)</label>
+            <label>Series prefix (default: hdr_mode)</label>
             <div class="picker">
-              <input id="prefixSeries" type="text" placeholder="ABC123">
+              <input id="prefixSeries" type="text" value="hdr_mode" placeholder="hdr_mode">
               <div class="picker-buttons">
                 <button class="secondary" onclick="seedSeriesPrefix(true)">Randomize</button>
               </div>
@@ -583,8 +583,8 @@
 
         <div class="row">
           <div>
-            <label>HDR tag name</label>
-            <input id="hdrTagSeries" type="text" value="hdr_mode">
+            <label>Extra tags (comma-separated)</label>
+            <input id="extraTagsSeries" type="text" placeholder="tag1, tag2">
           </div>
         </div>
 
@@ -593,7 +593,7 @@
             <label><input id="recursiveSeries" type="checkbox"> Scan subdirectories</label>
           </div>
           <div>
-            <label><input id="overwriteSeries" type="checkbox"> Overwrite existing series tags</label>
+            <label><input id="overwriteSeries" type="checkbox" checked> Overwrite existing series tags</label>
           </div>
         </div>
 
@@ -718,7 +718,6 @@
     window.addEventListener('load', () => {
       applyLogLevelColor('logLevelGps');
       applyLogLevelColor('logLevelSeries');
-      seedSeriesPrefix(true);
       showVersionTag();
       subscribeToProgress();
       initExifTab();
@@ -1257,7 +1256,7 @@
         mode: document.getElementById('modeSeries').value,
         prefix: document.getElementById('prefixSeries').value,
         startIndex,
-        hdrTag: document.getElementById('hdrTagSeries').value,
+        extraTags: document.getElementById('extraTagsSeries').value,
       };
       try {
         const res = await getBackend().ProcessSeries(req);

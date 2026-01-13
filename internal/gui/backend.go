@@ -199,7 +199,7 @@ type SeriesRequest struct {
 	Mode       string `json:"mode"`
 	Prefix     string `json:"prefix"`
 	StartIndex int    `json:"startIndex"`
-	HDRTag     string `json:"hdrTag"`
+	ExtraTags  string `json:"extraTags"`
 }
 
 // Process executes the geotagging workflow using existing CLI logic.
@@ -309,7 +309,7 @@ func (b *Backend) ProcessSeries(req SeriesRequest) (*app.Summary, error) {
 		Mode:         mode,
 		Prefix:       req.Prefix,
 		StartIndex:   req.StartIndex,
-		HDRTag:       req.HDRTag,
+		ExtraTags:    req.ExtraTags,
 		PrintSummary: false,
 		Progress: func(done, total int) {
 			progress.update(done, total)

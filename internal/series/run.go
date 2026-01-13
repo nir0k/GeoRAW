@@ -87,8 +87,9 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 	warnf := logInstance.Warningf
 	errorf := logInstance.Errorf
 
-	infof("Starting series tagging with input=%s recursive=%t mode=%s overwrite=%t prefix=%s start=%d hdrTag=%s",
-		opts.InputPath, opts.Recursive, opts.Mode, opts.Overwrite, opts.Prefix, opts.StartIndex, opts.HDRTag)
+	extraTags := parseExtraTags(opts.ExtraTags)
+	infof("Starting series tagging with input=%s recursive=%t mode=%s overwrite=%t prefix=%s start=%d extraTags=%q",
+		opts.InputPath, opts.Recursive, opts.Mode, opts.Overwrite, opts.Prefix, opts.StartIndex, strings.Join(extraTags, ","))
 
 	files, err := media.CollectFiles(opts.InputPath, opts.Recursive)
 	if err != nil {
@@ -250,7 +251,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 			continue
 		}
 
-		typeTag := opts.HDRTag
+		typeTag := seriesTypeTag
 		if group.ForcedType == nil && !shouldTagHDR(group.Jobs, opts) {
 			for _, job := range group.Jobs {
 				skipped++
@@ -268,7 +269,9 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 		seriesIdx++
 
 		for _, job := range group.Jobs {
-			tags := []string{typeTag, seriesID}
+			tags := make([]string, 0, 2+len(extraTags))
+			tags = append(tags, typeTag, seriesID)
+			tags = append(tags, extraTags...)
 			sidecar := xmp.SidecarPath(job.Path)
 
 			wrote, err := xmp.MergeKeywords(sidecar, tags, opts.Overwrite)
@@ -336,6 +339,22 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 
 func isCanon(makeStr string) bool {
 	return strings.Contains(strings.ToLower(makeStr), "canon")
+}
+
+func parseExtraTags(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	tags := make([]string, 0, len(parts))
+	for _, part := range parts {
+		tag := strings.TrimSpace(part)
+		if tag == "" {
+			continue
+		}
+		tags = append(tags, tag)
+	}
+	return tags
 }
 
 func buildGroups(jobs []seriesJob) []seriesGroup {

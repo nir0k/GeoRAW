@@ -17,6 +17,8 @@ const (
 	ModeHDR  Mode = "hdr"
 )
 
+const seriesTypeTag = "hdr_mode"
+
 // Options represents user-provided parameters for series tagging.
 type Options struct {
 	InputPath    string
@@ -27,7 +29,7 @@ type Options struct {
 	Mode         Mode
 	Prefix       string
 	StartIndex   int
-	HDRTag       string
+	ExtraTags    string
 	PrintSummary bool
 	Progress     func(done, total int)
 }
@@ -38,7 +40,7 @@ func (o *Options) Validate() error {
 	o.LogLevel = strings.TrimSpace(o.LogLevel)
 	o.LogFile = strings.TrimSpace(o.LogFile)
 	o.Prefix = strings.TrimSpace(o.Prefix)
-	o.HDRTag = strings.TrimSpace(o.HDRTag)
+	o.ExtraTags = strings.TrimSpace(o.ExtraTags)
 
 	if o.InputPath == "" {
 		return fmt.Errorf("input path is required")
@@ -64,20 +66,13 @@ func (o *Options) Validate() error {
 	}
 
 	if o.Prefix == "" {
-		pfx, err := randomPrefix(6)
-		if err != nil {
-			return fmt.Errorf("generate prefix: %w", err)
-		}
-		o.Prefix = pfx
+		o.Prefix = seriesTypeTag
 	}
 	if len(o.Prefix) < 3 {
 		return fmt.Errorf("prefix must be at least 3 characters")
 	}
 	if o.StartIndex < 1 {
 		o.StartIndex = 1
-	}
-	if o.HDRTag == "" {
-		o.HDRTag = "hdr_mode"
 	}
 
 	return nil

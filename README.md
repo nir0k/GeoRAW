@@ -35,12 +35,12 @@ georaw --gpx /path/track.gpx --input "/photos/*.CR3" --recursive \
 - `--log-file` — log file path (defaults to `georaw.log` next to the binary).
 
 ## HDR series tagging (Canon RAW)
-Detects HDR series (Canon only), groups shots by time/order, and writes two keywords to XMP sidecars: type (`hdr_mode` by default) and unique ID (`PREFIX_00001`, etc.). RAW files are never modified; non-Canon RAWs are skipped. Run it from the GUI Series tab (auto detection or forced HDR), with prefix/start index, tag name, recursion, and overwrite controls; results include per-file statuses and series IDs with logs available via the modal.
+Detects HDR series (Canon only), groups shots by time/order, and writes two keywords to XMP sidecars: type (`hdr_mode` by default) and unique ID (`PREFIX_00001`, etc.). RAW files are never modified; non-Canon RAWs are skipped. Run it from the GUI Series tab (auto detection or forced HDR), with prefix/start index, extra tags (comma-separated), recursion, and overwrite controls; results include per-file statuses and series IDs with logs available via the modal.
 
 ### GUI
 The GUI has three tabs:
 - **GPS tagging** — existing GPX workflow.
-- **Series tagging** — select photos (file/folder/glob), mode (auto or force HDR), prefix/start index, HDR tag name, recursion, overwrite toggle, and run. Results show per-file status plus series type/ID tags; logs available via the modal.
+- **Series tagging** — select photos (file/folder/glob), mode (auto or force HDR), prefix/start index, extra tags (comma-separated), recursion, overwrite toggle, and run. Results show per-file status plus series type/ID tags; logs available via the modal.
 - **EXIF viewer** — browse a folder (nested directories inline), filter files in the tree, and separately search metadata (by field name or value) for supported photo formats (RAW/JPEG/HEIF/HIF/AVIF/TIFF). XMP/sidecar fields can be toggled and are included by default. Requires `exiftool` in `PATH` (see below).
 
 ## GUI (Wails)
