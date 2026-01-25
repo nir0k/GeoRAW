@@ -832,6 +832,21 @@
       bar.style.width = `${pct}%`;
     }
 
+    function setIndeterminateProgress(context, active) {
+      const progress = document.getElementById(`progress-${context}`);
+      const bar = progress ? progress.querySelector('.progress-bar') : null;
+      if (!progress || !bar) return;
+      if (active) {
+        progress.style.display = 'block';
+        bar.classList.remove('complete');
+        bar.classList.add('indeterminate');
+        bar.style.marginLeft = '0';
+        bar.style.width = '40%';
+        return;
+      }
+      bar.classList.remove('indeterminate');
+    }
+
     async function pickGPX() {
       try {
         const result = await getBackend().PickGPX();
@@ -1214,6 +1229,7 @@
       clearResults(ctx);
       setRunning(ctx, true);
       resetProgress(ctx, false);
+      setIndeterminateProgress(ctx, true);
       await getBackend().ClearLogs();
       lastFolderPath = "";
       const req = {
@@ -1242,6 +1258,7 @@
       clearResults(ctx);
       setRunning(ctx, true);
       resetProgress(ctx, false);
+      setIndeterminateProgress(ctx, true);
       await getBackend().ClearLogs();
       lastFolderPath = "";
       let startIndex = parseInt(document.getElementById('startIndexSeries').value || "1", 10);

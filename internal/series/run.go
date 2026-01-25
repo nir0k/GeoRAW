@@ -99,7 +99,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 		return nil, fmt.Errorf("no files found to process")
 	}
 
-	total := 0
+	totalFiles := 0
 	for _, path := range files {
 		ext := strings.ToLower(filepath.Ext(path))
 		if ext == ".xmp" {
@@ -108,16 +108,27 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 		if isHDRMergedCandidate(ext) {
 			continue
 		}
-		total++
+		totalFiles++
 	}
-	completed := 0
-	reportProgress := func(done int) {
-		if opts.Progress == nil || total == 0 {
+	progressTotal := totalFiles * 2
+	progressDone := 0
+	reportProgress := func() {
+		if opts.Progress == nil || progressTotal == 0 {
 			return
 		}
-		opts.Progress(done, total)
+		if progressDone > progressTotal {
+			progressDone = progressTotal
+		}
+		opts.Progress(progressDone, progressTotal)
 	}
-	reportProgress(0)
+	advance := func(step int) {
+		if step <= 0 {
+			return
+		}
+		progressDone += step
+		reportProgress()
+	}
+	reportProgress()
 
 	var (
 		results   []app.FileResult
@@ -162,8 +173,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 			warnf("Skipping non-RAW file: %s", path)
 			skipped++
 			results = append(results, app.FileResult{Path: path, Status: "skipped", Message: "Not a RAW file"})
-			completed++
-			reportProgress(completed)
+			advance(2)
 			continue
 		}
 
@@ -176,8 +186,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 				Status:  "meta_error",
 				Message: err.Error(),
 			})
-			completed++
-			reportProgress(completed)
+			advance(2)
 			continue
 		}
 
@@ -189,8 +198,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 				Status:  "skipped",
 				Message: "Not a Canon RAW",
 			})
-			completed++
-			reportProgress(completed)
+			advance(2)
 			continue
 		}
 
@@ -199,6 +207,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 			Meta: meta,
 			Seq:  parseSequence(path),
 		})
+		advance(1)
 	}
 
 	if len(jobs) == 0 {
@@ -245,8 +254,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 					Status:  "skipped",
 					Message: "Series too short",
 				})
-				completed++
-				reportProgress(completed)
+				advance(1)
 			}
 			continue
 		}
@@ -260,8 +268,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 					Status:  "skipped",
 					Message: "Not detected as HDR",
 				})
-				completed++
-				reportProgress(completed)
+				advance(1)
 			}
 			continue
 		}
@@ -283,8 +290,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 					Status:  "unchanged",
 					Message: "Series tags already present",
 				})
-				completed++
-				reportProgress(completed)
+				advance(1)
 				continue
 			}
 			if err != nil {
@@ -295,8 +301,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 					Status:  "failed",
 					Message: err.Error(),
 				})
-				completed++
-				reportProgress(completed)
+				advance(1)
 				continue
 			}
 
@@ -316,8 +321,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*app.Summary, er
 					Message: "Sidecar unchanged",
 				})
 			}
-			completed++
-			reportProgress(completed)
+			advance(1)
 		}
 	}
 

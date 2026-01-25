@@ -93,21 +93,32 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 		return nil, fmt.Errorf("no files found to process")
 	}
 
-	total := 0
+	totalFiles := 0
 	for _, path := range files {
 		if strings.EqualFold(filepath.Ext(path), ".xmp") {
 			continue
 		}
-		total++
+		totalFiles++
 	}
-	completed := 0
-	reportProgress := func(done int) {
-		if opts.Progress == nil || total == 0 {
+	progressTotal := totalFiles * 2
+	progressDone := 0
+	reportProgress := func() {
+		if opts.Progress == nil || progressTotal == 0 {
 			return
 		}
-		opts.Progress(done, total)
+		if progressDone > progressTotal {
+			progressDone = progressTotal
+		}
+		opts.Progress(progressDone, progressTotal)
 	}
-	reportProgress(0)
+	advance := func(step int) {
+		if step <= 0 {
+			return
+		}
+		progressDone += step
+		reportProgress()
+	}
+	reportProgress()
 
 	var (
 		processed int
@@ -140,8 +151,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Path:   path,
 				Status: "skipped",
 			})
-			completed++
-			reportProgress(completed)
+			advance(2)
 			continue
 		}
 
@@ -154,8 +164,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Status:  "meta_error",
 				Message: err.Error(),
 			})
-			completed++
-			reportProgress(completed)
+			advance(2)
 			continue
 		}
 
@@ -163,6 +172,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 			Path: path,
 			Meta: meta,
 		})
+		advance(1)
 	}
 
 	if len(jobs) == 0 {
@@ -200,8 +210,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 					Status:  "out_of_track",
 					Message: err.Error(),
 				})
-				completed++
-				reportProgress(completed)
+				advance(1)
 				continue
 			}
 			errorf("No matching GPX point for %s (%s): %v", job.Path, capture.Format(time.RFC3339), err)
@@ -211,8 +220,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Status:  "failed",
 				Message: err.Error(),
 			})
-			completed++
-			reportProgress(completed)
+			advance(1)
 			continue
 		}
 
@@ -226,8 +234,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Status:  "unchanged",
 				Message: "GPS already present",
 			})
-			completed++
-			reportProgress(completed)
+			advance(1)
 			continue
 		}
 		if err != nil {
@@ -238,8 +245,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Status:  "failed",
 				Message: err.Error(),
 			})
-			completed++
-			reportProgress(completed)
+			advance(1)
 			continue
 		}
 
@@ -268,8 +274,7 @@ func run(ctx context.Context, opts Options, buf *bytes.Buffer) (*Summary, error)
 				Message: "Sidecar existed",
 			})
 		}
-		completed++
-		reportProgress(completed)
+		advance(1)
 	}
 
 	sum := &Summary{
